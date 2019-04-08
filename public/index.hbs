@@ -7,17 +7,48 @@
 	</title>
 	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700&amp;subset=latin-ext" rel="stylesheet"> 
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.1/css/all.css" integrity="sha384-O8whS3fhG2OnA5Kas0Y9l3cfpmYjapjI0E4theH4iuMD+pLhbf6JI0jIMfYcK3yZ" crossorigin="anonymous">
-	<link rel="stylesheet" href="./css/normalize.css">
-	<link rel="stylesheet" href="./css/style.css">
+	<link rel="stylesheet" href="/css/normalize.css">
+	<link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-	<ul>
-		<li ><a href="/registrate" class="button">Registrácia</a></li>
-		<li ><a href="/logTo" class="button">Prihlasenie sa na turnaj</a></li>
-		<li ><a href="/tournament/create" class="button">Vytvorenie turnaja</a></li>
-		<li ><a href="/registrate" class="button">Vyhladanie turnaja</a></li>
-		<li ><a href="/registrate" class="button">Priebeh turnaja</a></li>
-	</ul>
+	
+		
+	
+	{{#if id}}
+	<div class="wrapper">
+		<h2 class="h2-id">Ste prihlásený ako používateľ s ID: {{id}}</h2>
+		
+		<ul>
+			<li ><a href="/confirmation" class="button">Potvrdenie registrácie</a></li>
+			<li ><a href="/filter" class="button">Prihlasenie sa na turnaj</a></li>
+			<li ><a href="/tournament/create" class="button">Vytvorenie turnaja</a></li>
+			<li ><a href="/registrate" class="button">Priebeh turnaja</a></li>
+			<li ><a href="/logout" class="button">Odhlásiť sa</a></li>
+		</ul>
+	</div>
+	{{else}}
+		<div class="wrapper">
+			<h1>Prihlásenie sa</h1>
+			<form action="/login" method="POST">
+				
+				<div class="part">
+					<label for="email">Email</label>
+					<input type="text" id="email" name="email" placeholder="Váš email">
+				</div>
+
+				<div class="part">
+					<label for="password">Password</label>
+					<input type="password" id="password" name="password" placeholder="Vaše heslo">
+				</div>
+
+				<input type="submit" class="button-ok" value="Ok" id="search-button"class="button btn-form">
+
+				<a href="/registrate" class="button-registrate">Registrovať sa</a>
+				
+			</form>
+
+		</div>
+	{{/if}}
 	
 </body>
 </html>

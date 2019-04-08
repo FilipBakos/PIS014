@@ -12,8 +12,8 @@
 </head>
 <body>
 	<div class="wrapper">
-		<h1>Staré turnaje</h1>
-		<form action="registrate/{{id}}" method="POST">
+		<h1>Turnaje</h1>
+		<form action="/connect/{{id}}" method="POST">
 			<table >
 				<tr>
 					<th>ID</th>
@@ -28,18 +28,17 @@
 					<th>Výber</th>
 				</tr>
 				{{#each tournaments}}
-				<p>{{this}}</p>
 					<tr>
 						<td>{{this.id}}</td>
 						<td>{{this.name}}</td>
 						<td>{{this.date}}</td>
-						<td>{{this.miesto}}</td>
+						<td>{{this.place}}</td>
 						<td>{{this.maxC}}</td>
 						<td>{{this.minC}}</td>
 						<td>{{this.parovanie}}</td>
-						<td>{{this.sukromny}}</td>
+						<td>{{this.private}}</td>
 						<td>{{this.date1}}</td>
-						<td><a href="/tournament/create/{{this.id}}" class="button">Vybrať</a></td>
+						<td><a href="/connect/{{this.id}}" class="button">Vybrať</a></td>
 					</tr>
 				{{/each}}
 				
@@ -51,9 +50,9 @@
 				<input type="checkbox" name="confirmed" id="confirmed">
 				<label for="confirmed" id="check">Potvrdenie</label>
 			</div> --}}
-
+{{!-- 
 			<input type="submit" class="button-ok" value="Ok" id="search-button"class="button btn-form">
-			
+			 --}}
 		</form>
 
 	</div>

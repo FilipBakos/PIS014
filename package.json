@@ -10,12 +10,14 @@
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.18.3",
+    "dateformat": "^3.0.3",
     "express": "^4.16.3",
     "hbs": "^4.0.3",
     "moment": "^2.22.2",
     "mustache": "^2.3.2",
     "pg": "^7.9.0",
     "pg-hstore": "^2.3.2",
-    "sequelize": "^5.2.12"
+    "sequelize": "^5.2.12",
+    "soap": "^0.26.0"
   }
 }

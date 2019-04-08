@@ -103,6 +103,7 @@ i {
 }
 
 .button-ok {
+	height: 40px;
 	margin-top: 25px;
 	width: 75px;
 	display: inline-block;
@@ -110,6 +111,19 @@ i {
 	padding: 5px 10px;
 	border: 2px solid #888;
 	border-radius: 5px;
+	transition: border ease 0.8s;
+}
+
+.button-registrate {
+	height: 42px;
+	margin-top: 25px;
+	width: auto;
+	display: inline-block;
+	margin-right: 15px;
+	padding: 5px 10px;
+	border: 2px solid #888;
+	border-radius: 5px;
+	background-color: #fcfcfc;
 	transition: border ease 0.8s;
 }
 
@@ -179,5 +193,9 @@ td {
 td .button {
 	width: 60px;
 	border: 2px solid #777;
+}
+
+.h2-id {
+	margin-left: 40px;
 }
 

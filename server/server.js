@@ -3,12 +3,17 @@ const http = require('http'); //netreba instalovat
 const express = require('express');
 const bodyParser = require('body-parser');
 const hbs = require('hbs');
+const dateFormat = require('dateformat');
 
-const {Elo, Match, OrganizatorsList,Player,Playerslist,Roundslist,Sport,Tournament} = require('../models/index.js');
+// const {Elo, Match, OrganizatorsList,Player,Playerslist,Roundslist,Sport,Tournament} = require('../models/index.js');
+const Player = require('./controllers/playerController.js');
+const Tournament = require('./controllers/tournamentController.js')
 
 
 const publicPath = path.join(__dirname, '../public' );
 const port = process.env.PORT || 3000;
+
+let id = 0;
 
 var app = express();
 var server = http.createServer(app);
@@ -20,9 +25,29 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(publicPath));
 
 app.get('/', (req, res) => {
-	res.render('index');
+	res.render('index', {id: id});
 });
 
+app.post('/login', (req, res) => {
+	Player.getAll()
+	.then(result => {
+		result[0].players.player.forEach((item) => {
+		  if(item.email === req.body.email && item.password === req.body.password && item.confirmed){
+		  	id = item.id;
+		  }
+		})
+		if(id !== 0) {
+			res.render('index', {id: id})
+		} else {
+			res.render('index');
+		}
+	})
+});
+
+app.get('/logout', (req, res) => {
+	id = 0;
+	res.redirect('http://localhost:3000/');
+});
 
 //BP01
 app.get('/registrate', (req, res) => {
@@ -33,73 +58,113 @@ app.post('/registrate', (req, res) => {
 	console.log(req.body)
 	Player.create(req.body)
 		.then(player => {
-			console.log("Player> ", player.dataValues);
-			res.render('confirmation',player.dataValues);
+			req.body.id = player[0].id;
+			res.redirect('http://localhost:3000/');
 		})
 		.catch(error => {
 			console.log("error> ", error);
 		})
-	console.log(req.body);
 });
 
-app.post('/registrate/:id', (req, res) => {
-	console.log(req.body)
-	Player.update(req.body, {
-			returning: true,
-			where:{
-				id: req.params.id
-			}
+//MIDDLEWARE - ci je prihlaseny
+app.use(function(req, res, next) {
+  if (id === 0) {
+    return res.redirect('http://localhost:3000/');
+  }
+  next();
+});
+
+app.get('/confirmation', (req, res) => {
+	let players = [];
+	Player.getAll()
+	.then(result => {
+		result[0].players.player.forEach((item) => {
+		  if(item.confirmed === false){
+		  	players.push(item);
+		  }
+		})
+		console.log(players);
+		res.render('confirmation', {players: players});
 	})
-	.then(player => {
-		console.log("Potvrdeny ", player.dataValues);
-		res.redirect('http://localhost:3000/')
-		// res.render('index', {id: req.params.id});
-	})
-	.catch(error => {
-		console.log("error> ", error);
-	})
-	console.log(req.body);
+})
+
+app.post('/confirmation', (req, res) => {
+	console.log("Tu som")
+	let promises = []
+	if(req.body.confirmed){
+		req.body.confirmed.forEach((item) => {
+			promises.push(
+				Player.getById(item)
+				.then((result) => {
+					result[0].player.confirmed = true;
+					return Player.update(item, result[0].player)
+				})
+			)
+		})
+
+		Promise.all(promises)
+		.then((result) => {
+			res.redirect('http://localhost:3000/');
+		})
+	} else {
+		res.redirect('http://localhost:3000/');
+	}
 });
 
 //BP02
-app.get('/logTo', (req, res) => {
-	res.render('browseTournaments');
+app.get('/filter', (req, res) => {
+	res.render('filter');
 });
 
-app.get('/filter', (req, res) => {
-	Tournament.findAll({
-		where: {
-	  		name: req.query.name,
-	  		date: req.query.date
-	  	//  sportId: req.params.sportId
-			}
-	   // include: [{model: Tournament, as:'tournaments'}]
+app.post('/filter', (req, res) => {
+	let tournaments = [];
+	let tournamentsAlreadyLogged = [];
+	console.log(req.body);
+	Tournament.getAllByPlayerId()
+	.then((result) => {
+		console.log("RESULT>> ",result)
+		if (result[0].zoznamorganizators) {
+			result[0].zoznamorganizators.zoznamorganizator.forEach((item) => {
+				tournamentsAlreadyLogged.push(item.tournamentId);
+			})
+		}
+		console.log("already logged> ",tournamentsAlreadyLogged)
+		return Tournament.getAll()
 	})
-	.then((tournaments) => {
-		res.render('filterList', {tournaments: tournaments});
+	.then((result) => {
+		result[0].turnajs.turnaj.forEach((item) => {
+			//TOTO PREROBIT NA 3*foreach
+			console.log(item.id)
+			if (tournamentsAlreadyLogged.includes(item.id)){
+				console.log('Uz je regnuty');
+			} else if (req.body.date !== '' && req.body.name !== ''){
+				if (req.body.date === dateFormat(item.date, "yyyy-mm-dd") && req.body.name === item.name){
+					tournaments.push(item)
+				} 
+			} else if(req.body.date !== '' || req.body.name !== '') {
+				if (req.body.date !== '' && req.body.date === dateFormat(item.date, "yyyy-mm-dd")){
+					tournaments.push(item)
+				} else if (req.body.name !== '' && req.body.name === item.name){
+					tournaments.push(item)
+				}
+			} else {
+				tournaments.push(item)
+			}
+		})
+		res.render("listFilteredTournaments",{tournaments: tournaments});
 	})
 	.catch(error => {
 		console.log(error)
 	})
 });
 
-app.post('/logTo/:id', (req, res) => {
-	return PlayersList.create({
-		"playerId": 1,
-		"tournamentId": req.params.id,
-		"confirmed": false
-	})
+app.get('/connect/:id', (req, res) => {
+	Player.createAssingment(id, req.params.id)
 	.then(result => {
-		PlayersList.findAll({
-			where: {
-	  			tournamentId: req.params.id,
-	  	//  sportId: req.params.sportId
-			}
-		})
+		console.log(result);
+		res.redirect('http://localhost:3000/');
 	})
-	.then(result => {
-		res.redirect('http://localhost:3000/confirmPlayers',result)
-	})
+	.catch(error => console.log(error));
 });
 
 //BP03
@@ -108,39 +173,50 @@ app.get('/tournament/create', (req, res) => {
 });
 
 app.get('/tournament/create/:id', (req, res) => {
-	Tournament.findByPk(req.params.id)
-	.then(tournament => {
-		console.log('tournament: ',tournament.dataValues)
-		res.render('createTournament',{"tournament": tournament.dataValues});
+	Tournament.getById(req.params.id)
+	.then(result => {
+		res.render('createTournament',{"tournament": result[0].turnaj});
 	})
 });
 
 app.post('/tournament/create', (req, res) => {
 	Tournament.create(req.body)
 	.then(tournament => {
-		return OrganizatorsList.create({
-			"playerId": 1,
-			"tournamentId": tournament.dataValues.id
-		})
+		console.log(tournament)
+		return Tournament.createAssingment(id, tournament[0].id)
 	})
 	.then(result => {
 		res.redirect('http://localhost:3000/')
 	})
-	
 });
 
 app.get('/tournament/listOld', (req, res) => {
-	Player.findAll({
-		where: {
-	  		id: 1
-			},
-	    include: [{model: Tournament, as:'tournaments'}]
+	let promises = [];
+	let tournaments = [];
+	Tournament.getAllByPlayerId()
+	.then((result) => {
+		if(result[0].zoznamorganizators) {
+			result[0].zoznamorganizators.zoznamorganizator.forEach((item) => {
+				if(item.playerId === id) {
+					promises.push(
+						Tournament.getById(item.tournamentId)
+						.then(result => {
+							console.log(result[0].turnaj)
+							tournaments.push(result[0].turnaj);
+						})
+					)					
+				}
+
+			})	
+			return Promise.all(promises)		
+		} else {
+			return new Error("chyba");
+		}
+		
 	})
-	.then((player) => {
-		let tournaments = [];
-		getAllTournaments(player[0].tournaments, tournaments)
-		console.log('Render');
-		res.render('listOld', {tournaments: tournaments});
+	.then((result) => {
+		console.log(tournaments);
+		res.render('listOldTournaments', {tournaments: tournaments});
 	})
 	.catch(error => {
 		console.log(error)
@@ -150,10 +226,6 @@ app.get('/tournament/listOld', (req, res) => {
 server.listen(port, () => {
 	console.log(`App je na porte ${port}`);
 });
-
-//BP04
-
-
 
 //BP05
 //
