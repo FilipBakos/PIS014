@@ -62,6 +62,45 @@ app.post('/registrate/:id', (req, res) => {
 });
 
 //BP02
+app.get('/logTo', (req, res) => {
+	res.render('browseTournaments');
+});
+
+app.get('/filter', (req, res) => {
+	Tournament.findAll({
+		where: {
+	  		name: req.query.name,
+	  		date: req.query.date
+	  	//  sportId: req.params.sportId
+			}
+	   // include: [{model: Tournament, as:'tournaments'}]
+	})
+	.then((tournaments) => {
+		res.render('filterList', {tournaments: tournaments});
+	})
+	.catch(error => {
+		console.log(error)
+	})
+});
+
+app.post('/logTo/:id', (req, res) => {
+	return PlayersList.create({
+		"playerId": 1,
+		"tournamentId": req.params.id,
+		"confirmed": false
+	})
+	.then(result => {
+		PlayersList.findAll({
+			where: {
+	  			tournamentId: req.params.id,
+	  	//  sportId: req.params.sportId
+			}
+		})
+	})
+	.then(result => {
+		res.redirect('http://localhost:3000/confirmPlayers',result)
+	})
+});
 
 //BP03
 app.get('/tournament/create', (req, res) => {
@@ -139,6 +178,8 @@ const getAllTournaments = (object, array) => {
 	  array.push(obj);
 	})
 }
+
+
 
 
 

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>PIS
+	</title>
+	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700&amp;subset=latin-ext" rel="stylesheet"> 
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.1/css/all.css" integrity="sha384-O8whS3fhG2OnA5Kas0Y9l3cfpmYjapjI0E4theH4iuMD+pLhbf6JI0jIMfYcK3yZ" crossorigin="anonymous">
+	<link rel="stylesheet" href="./css/normalize.css">
+	<link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+	<div class="wrapper">
+		<h1>Potvrdenie registrácie</h1>
+		<form action="registrate/{{id}}" method="POST">
+			<table style="width:100%">
+				<tr>
+					<th>ID</th>
+					<th>ID hraca</th>
+					<th>ID turnaja</th>
+				</tr>
+				<tr>
+					{{#each result}}
+					<p>{{this}}</p>
+					<tr>
+						<td>{{this.dataValues.id}}</td>
+						<td>{{this.dataValues.playerId}}</td>
+						<td>{{this.dataValues.tournamentId}}</td>
+						<td><input type="checkbox" name="confirmed" id="confirmed"></td>
+					</tr>
+				{{/each}}
+				</tr>
+			</table> 
+
+
+
+			{{!-- <div class="part">
+				<input type="checkbox" name="confirmed" id="confirmed">
+				<label for="confirmed" id="check">Potvrdenie</label>
+			</div> --}}
+
+			<input type="submit" class="button-ok" value="Ok" id="search-button"class="button btn-form">
+			
+		</form>
+
+	</div>
+	
+	
+</body>
+</html>
