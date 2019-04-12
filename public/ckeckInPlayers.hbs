@@ -13,32 +13,24 @@
 <body>
 	<div class="wrapper">
 		<h1>Potvrdenie registrácie</h1>
-		<form action="/confirmation" method="POST">
+		<form action="registrate/{{id}}" method="POST">
 			<table style="width:100%">
 				<tr>
 					<th>ID</th>
-					<th>Meno</th>
-					<th>Priezvisko</th>
-					<th>Prezývka</th>
-					<th>Email</th>
-					<th>Datum narodenia</th>
-					<th>Narodnost</th>
-					<th>Pohlavie</th>
-					<th>Potvrdenie</th>
+					<th>ID hraca</th>
+					<th>ID turnaja</th>
 				</tr>
-				{{#each players}}
+				<tr>
+					{{#each result}}
+					<p>{{this}}</p>
 					<tr>
-						<td>{{this.id}}</td>
-						<td>{{this.name}}</td>
-						<td>{{this.lastName}}</td>
-						<td>{{this.nickName}}</td>
-						<td>{{this.email}}</td>
-						<td>{{this.birth}}</td>
-						<td>{{this.narodnost}}</td>
-						<td>{{this.pohlavie}}</td>
-						<td><input type="checkbox" name="confirmed[]" value="{{this.id}}" id="confirmed"></td>
+						<td>{{this.dataValues.id}}</td>
+						<td>{{this.dataValues.playerId}}</td>
+						<td>{{this.dataValues.tournamentId}}</td>
+						<td><input type="checkbox" name="confirmed" id="confirmed"></td>
 					</tr>
 				{{/each}}
+				</tr>
 			</table> 
 
 

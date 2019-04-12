@@ -29,18 +29,21 @@ app.get('/', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
+	
 	Player.getAll()
 	.then(result => {
 		result[0].players.player.forEach((item) => {
+
 		  if(item.email === req.body.email && item.password === req.body.password && item.confirmed){
 		  	id = item.id;
 		  }
 		})
-		if(id !== 0) {
-			res.render('index', {id: id})
-		} else {
-			res.render('index');
-		}
+		res.redirect('http://localhost:3000/');
+		// if(id !== 0) {
+		// 	res.redirect('http://localhost:3000/');
+		// } else {
+		// 	res.redirect('http://localhost:3000/');
+		// }
 	})
 });
 
@@ -120,12 +123,12 @@ app.post('/filter', (req, res) => {
 	let tournaments = [];
 	let tournamentsAlreadyLogged = [];
 	console.log(req.body);
-	Tournament.getAllByPlayerId()
+	Player.getAssingments()
 	.then((result) => {
 		console.log("RESULT>> ",result)
-		if (result[0].zoznamorganizators) {
-			result[0].zoznamorganizators.zoznamorganizator.forEach((item) => {
-				tournamentsAlreadyLogged.push(item.tournamentId);
+		if (result[0].zoznamhracovs) {
+			result[0].zoznamhracovs.zoznamhracov.forEach((item) => {
+				if(item.playerId === id) tournamentsAlreadyLogged.push(item.tournamentId);
 			})
 		}
 		console.log("already logged> ",tournamentsAlreadyLogged)
@@ -159,6 +162,10 @@ app.post('/filter', (req, res) => {
 });
 
 app.get('/connect/:id', (req, res) => {
+	// Player.getAssingments(id, req.params.id)
+	// .then(result => {
+	// 	console.log(result);
+	// })
 	Player.createAssingment(id, req.params.id)
 	.then(result => {
 		console.log(result);
@@ -222,13 +229,123 @@ app.get('/tournament/listOld', (req, res) => {
 		console.log(error)
 	})
 });
+//BP04
+//
+app.get('/tournament/list', (req, res) => {
+	let promises = [];
+	let tournaments = [];
+	Tournament.getAllByPlayerId()
+	.then((result) => {
+		if(result[0].zoznamorganizators) {
+			result[0].zoznamorganizators.zoznamorganizator.forEach((item) => {
+				if(item.playerId === id) {
+					promises.push(
+						Tournament.getById(item.tournamentId)
+						.then(result => {
+							// console.log(result[0].turnaj)
+							tournaments.push(result[0].turnaj);
+						})
+					)					
+				}
+
+			})	
+			return Promise.all(promises)		
+		} else {
+			return new Error("chyba");
+		}
+		
+	})
+	.then((result) => {
+		// console.log(tournaments);
+		res.render('listTournaments', {tournaments: tournaments});
+	})
+	.catch(error => {
+		console.log(error)
+	})
+});
+
+app.get('/tournament/checkIn/:id', (req, res) => {
+	let players = [];
+	let promises = [];
+	Player.getAssingments()
+	.then(result => {
+		console.log("Result: ", result);
+		if(result[0].zoznamhracovs) {
+			// console.log(result[0])
+			result[0].zoznamhracovs.zoznamhracov.forEach((item) => {
+				console.log(item.tournamentId," -- ", req.params.id, " -- ", item.confirmed)
+				if(item.tournamentId == req.params.id && item.confirmed === false){
+					promises.push(
+						Player.getById(item.playerId)
+						.then((result) => {
+							// console.log(result[0].player);
+							players.push(result[0].player)
+						})
+					)
+				}
+			})
+		}
+
+		return Promise.all(promises);
+	})
+	.then(result => {
+		res.render('confirmPlayers',{players: players, id: req.params.id})
+	})
+	.catch(error => console.log(error));
+
+
+});
+
+app.post('/checkIn/:id', (req, res) => {
+		let promises = [];
+	Player.getAssingments()
+	.then(result => {
+		if(result[0].zoznamhracovs) {
+			result[0].zoznamhracovs.zoznamhracov.forEach((item) => {
+				// console.log(req.body.confirmed ,' --- ',item.tournamentId,' === ',req.params.id.toString(),' --- ', req.body.confirmed.includes(item.playerId.toString()))
+				if(req.body.confirmed && item.tournamentId.toString() === req.params.id && req.body.confirmed.includes(item.playerId.toString())){
+					console.log('Tu som')
+					promises.push(Player.updateAssingment(item.id)
+						.then(result => {
+							console.log("Updatovany", item.id);
+						}))
+				}
+			})
+		}
+
+		Promise.all(promises)
+
+	})
+	.then((result) => {
+		res.redirect('http://localhost:3000/');
+	})
+	.catch(error => console.log(error))
+	// let promises = [];
+	// if(req.body.confirmed){
+	// 	req.body.confirmed.forEach((item) => {
+	// 		console.log("id: ",item);
+	// 		// promises.push(
+	// 		// 	Player.updateAssingment(item)
+	// 		// 	.then((result) => {
+					
+	// 		// 	})
+	// 		// )
+	// 	})
+
+	// ;
+	// } else {
+	// 	res.redirect('http://localhost:3000/');
+	// }
+});
+
+
 
 server.listen(port, () => {
 	console.log(`App je na porte ${port}`);
 });
 
-//BP05
-//
+
+
 
 
 

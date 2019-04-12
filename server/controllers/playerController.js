@@ -75,12 +75,37 @@ const createAssingment = (playerId, tournamentId) => {
 	})
 }
 
+const updateAssingment = (entityId) => {
+	let args = {
+		team_id: "014",
+		team_password: "fkAq7Z",
+		entity_id: entityId,
+		zoznamHracov: {
+			confirmed: true
+		}
+	};
+	return soap.createClientAsync(urlAssingToTournament)
+	.then((client) => {
+  		return client.updateAsync(args);
+	})
+}
+
+const getAssingments = () => {
+	return soap.createClientAsync(urlAssingToTournament)
+	.then((client) => {
+		return client.getAllAsync();
+	})
+}
+
+
 module.exports = {
 	create,
 	getAll,
 	update,
 	getById,
-	createAssingment
+	createAssingment,
+	getAssingments,
+	updateAssingment
 }
 
 
