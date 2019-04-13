@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>PIS
+	</title>
+	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700&amp;subset=latin-ext" rel="stylesheet"> 
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.1/css/all.css" integrity="sha384-O8whS3fhG2OnA5Kas0Y9l3cfpmYjapjI0E4theH4iuMD+pLhbf6JI0jIMfYcK3yZ" crossorigin="anonymous">
+	<link rel="stylesheet" href="/css/normalize.css">
+	<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+	<div class="wrapper">
+		<h1>Turnaje</h1>
+		<form action="/" method="GET">
+			<table >
+				<tr>
+					<th>ID</th>
+					<th>Názov</th>
+					<th>Dátum konania</th>
+					<th>Miesto konania</th>
+					<th>Maximálna kapacita</th>
+					<th>Minimálna kapacita</th>
+					<th>Potvrdených</th>
+					<th>Párovanie</th>
+					<th>Súkromný</th>
+					<th>Dátum zverejnenia</th>
+					<th>Výber</th>
+				</tr>
+				{{#each tournaments}}
+					<tr>
+						<td>{{this.id}}</td>
+						<td>{{this.name}}</td>
+						<td>{{this.date}}</td>
+						<td>{{this.place}}</td>
+						<td>{{this.maxC}}</td>
+						<td>{{this.minC}}</td>
+						<td>{{this.confirmed}}</td>
+						<td>{{this.parovanie}}</td>
+						<td>{{this.private}}</td>
+						<td>{{this.date1}}</td>
+						{{#if this.bool}}
+							<td><a href="/tournament/start/{{this.id}}" class="button">Vybrať</a></td>
+						{{else}}
+							<td></td>
+						{{/if}}
+						{{!-- <td><a href="/tournament/checkIn/{{this.id}}" class="button">Vybrať</a></td> --}}
+					</tr>
+				{{/each}}
+				
+			</table> 
+
+			{{!-- <div class="part">
+				<input type="checkbox" name="confirmed" id="confirmed">
+				<label for="confirmed" id="check">Potvrdenie</label>
+			</div> --}}
+
+			<input type="submit" class="button-ok" value="Domov" id="search-button"class="button btn-form">
+			
+		</form>
+
+	</div>
+	
+	
+</body>
+</html>

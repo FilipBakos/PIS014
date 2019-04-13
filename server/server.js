@@ -7,13 +7,25 @@ const dateFormat = require('dateformat');
 
 // const {Elo, Match, OrganizatorsList,Player,Playerslist,Roundslist,Sport,Tournament} = require('../models/index.js');
 const Player = require('./controllers/playerController.js');
-const Tournament = require('./controllers/tournamentController.js')
+const Tournament = require('./controllers/tournamentController.js');
+const Rounds = require('./controllers/roundController.js');
 
 
 const publicPath = path.join(__dirname, '../public' );
 const port = process.env.PORT || 3000;
 
+//nerobim to cez session, len takto globalne
+//TOTO BY BOLO V SESSIONE
 let id = 0;
+let sqr = ['2','4','8','16','32','64','128','256'];
+let table = [];
+let lastRound = 0;
+let tournamentId = '188784';
+let type = 'roundRobin';
+let matches = [];
+
+
+
 
 var app = express();
 var server = http.createServer(app);
@@ -36,6 +48,9 @@ app.post('/login', (req, res) => {
 
 		  if(item.email === req.body.email && item.password === req.body.password && item.confirmed){
 		  	id = item.id;
+		 //  	tournamentId = 0;
+			// lastRound = 0;
+		  	table = [];
 		  }
 		})
 		res.redirect('http://localhost:3000/');
@@ -49,7 +64,11 @@ app.post('/login', (req, res) => {
 
 app.get('/logout', (req, res) => {
 	id = 0;
+	// tournamentId = 0;
+	// lastRound = 0;
+	table = [];
 	res.redirect('http://localhost:3000/');
+
 });
 
 //BP01
@@ -320,34 +339,218 @@ app.post('/checkIn/:id', (req, res) => {
 		res.redirect('http://localhost:3000/');
 	})
 	.catch(error => console.log(error))
-	// let promises = [];
-	// if(req.body.confirmed){
-	// 	req.body.confirmed.forEach((item) => {
-	// 		console.log("id: ",item);
-	// 		// promises.push(
-	// 		// 	Player.updateAssingment(item)
-	// 		// 	.then((result) => {
-					
-	// 		// 	})
-	// 		// )
-	// 	})
-
-	// ;
-	// } else {
-	// 	res.redirect('http://localhost:3000/');
-	// }
 });
 
+app.get('/tournament/start', (req, res) => {
+	let backURL=req.header('Referer') || '/';
+	let promises = [];
+	let tournaments = [];
+	let numberOfConnectedPlayers = {};
+	Player.getAssingments()
+	.then(result => {
+		if (result[0].zoznamhracovs) {
+			result[0].zoznamhracovs.zoznamhracov.forEach((item) => {
+				if(item.confirmed) {
+					if(numberOfConnectedPlayers[item.tournamentId]) {
+						numberOfConnectedPlayers[item.tournamentId] += 1;
+					} else {
+						numberOfConnectedPlayers[item.tournamentId] = 1;
+					}
+				}
+			})
+		}
+		return Tournament.getAllByPlayerId()
+	})
+	.then((result) => {
+		if(result[0].zoznamorganizators) {
+			result[0].zoznamorganizators.zoznamorganizator.forEach((item) => {
+				if(item.playerId === id) {
+					promises.push(
+						Tournament.getById(item.tournamentId)
+						.then(result => {
+							result[0].turnaj.confirmed = numberOfConnectedPlayers[item.tournamentId.toString()];
+							if(result[0].turnaj.confirmed  >= result[0].turnaj.minC) {
+								
+								// console.log('Pole: ', sqr, ' -- ',result[0].turnaj.confirmed.toString() , ' -- ', sqr.includes(result[0].turnaj.confirmed.toString()) )
+								if(result[0].turnaj.parovanie === "roundRobin") 
+									result[0].turnaj.bool = true;
+								else if(result[0].turnaj.parovanie === "svajciarsky" && result[0].turnaj.confirmed % 2 === 0) result[0].turnaj.bool = true;
+
+								else if(result[0].turnaj.parovanie === "pavuk" && sqr.includes(result[0].turnaj.confirmed.toString())) result[0].turnaj.bool = true;
+								else result[0].turnaj.bool = false 
+							}
+							else result[0].turnaj.bool = false;
+							tournaments.push(result[0].turnaj);
+						})
+					)					
+				}
+
+			})	
+			return Promise.all(promises)		
+		} else {
+			return new Error("chyba");
+		}
+		
+	})
+	.then((result) => {
+		res.render('listTournamentsStart', {tournaments: tournaments});
+	})
+	.catch(error => {
+		console.log(error)
+	})
+});
+
+app.get('/tournament/start/:id', (req, res) => {
+	tournamentId = req.params.id;
+	Tournament.getById(req.params.id)
+	.then((result) => {
+		console.log(result[0].turnaj);
+		type = result[0].turnaj.parovanie;
+		return parovanieFunctions[result[0].turnaj.parovanie](result[0].turnaj)
+	})
+	.then(result => {
+		res.redirect('/tournament/round');
+	})
+	.catch(error => {
+		console.log(error)
+	})
+});
+
+app.get('/tournament/round', (req, res) => {
+	console.log('Tu som');
+	lastRound += 1;
+	let roundId = 0;
+	matches = [];
+	let players = [];
+	let obj = {};
+	console.log("LastRound: ", lastRound)
+
+	Rounds.getAllRounds()
+	.then(result => {
+		console.log(result)
+		if(result[0].zoznamkols && type === 'roundRobin'){
+			result[0].zoznamkols.zoznamkol.forEach((item) => {
+				console.log(item.tournamentId , ' --- ', tournamentId , ' --- ',item.name,' --- ', lastRound.toString())
+				if(item.tournamentId.toString() === tournamentId.toString() && item.name === lastRound.toString()) roundId = item.id
+			})
+		}
+		if (roundId === 0) {
+			res.redirect('http://localhost:3000/');
+		}
+		return Rounds.getAllMatches()
+	})
+	.then(result => {
+				console.log(result)
+
+		if(result[0].zapass){
+			result[0].zapass.zapa.forEach((item) => {
+				if (item.roundId === roundId) {
+					matches.push(item);
+				}
+			})
+		}
+		console.log("Round ID> ", roundId)
+		console.log("Matches> ", matches);
+		return Player.getAll()
+	})
+	.then(result => {
+		if(result[0].players){
+			result[0].players.player.forEach((player) => {
+				matches.forEach((match) => {
+					if (player.id === match.team1Id) match.team1 = player.nickName;
+					if (player.id === match.team2Id) match.team2 = player.nickName;
+				})
+			})
+		}
+		// matches1 = matches;
+		// console.log(matches1 , ' -- ', matches)
+		res.render('listRounds', {round:lastRound,matches: matches});
+	})
+});
+
+app.post('/round/update', (req, res) => {
+	console.log('Tu som v update');
+	let roundId = 0;
+	let promises = [];
+	let obj = {};
+	let scoreA, scoreB;
+	console.log(matches);
+	matches.forEach((match) => {
+		if(req.body[match.id + 'A']) {
+			scoreA = req.body[match.id + 'A'] 
+		} else {
+			scoreA = 0;
+		}
+		if(req.body[match.id + 'B']) {
+			scoreB = req.body[match.id + 'B']
+		} else {
+			scoreB = 0;
+		}
+		console.log(scoreA,' -- ', scoreB)
+		if(scoreA > scoreB) {
+			console.log("A ma lepsie skore")
+			table.forEach((row) => {
+				if (row.id === match.team1Id) {
+					row.win++;
+					row.points += 3;
+				}
+				if (row.id === match.team2Id) {
+					row.lose++;
+				}
+			})
+		}
+		else if(scoreA === scoreB) {
+						console.log("A ma rovnake skore")
+
+			table.forEach((row) => {
+				if (row.id === match.team1Id || row.id === match.team2Id) {
+					row.draw++;
+					row.points += 1;
+				}
+			})
+		} 
+		else {
+						console.log("B ma lepsie skore")
+
+			table.forEach((row) => {
+				if (row.id === match.team2Id) {
+					row.win++;
+					row.points += 3;
+				}
+				if (row.id === match.team1Id) {
+					row.lose++;
+				}
+			})
+		}
+		console.log("tabulka:", table);
+		promises.push(
+			Rounds.updateMatch(match.id, scoreA, scoreB)
+			.then(result => {
+				console.log(result)
+			})
+			.catch(error => console.log("errorroorororo"))
+		)
+
+	})
+	console.log("TU som sa dostal")
+
+
+	Promise.all(promises)
+	.then(result => {
+		console.log("Vsecko v poradku")
+		res.redirect('http://localhost:3000/tournament/round');
+
+	})
+	.catch(error => {
+		console.log("Error => ");
+		res.redirect('http://localhost:3000/');
+	})
+});
 
 
 server.listen(port, () => {
 	console.log(`App je na porte ${port}`);
 });
-
-
-
-
-
 
 
 //funkcie
@@ -367,6 +570,124 @@ const getAllTournaments = (object, array) => {
 	  array.push(obj);
 	})
 }
+
+const createTable = (players) => {
+	players.forEach((item) => {
+		table.push({
+			id: item,
+			win: 0,
+			draw: 0,
+			lose: 0,
+			points: 0
+		})
+	})
+}
+
+const generateMatches = (tournament, players) => {
+	let arr = [];
+	let rounds = [];
+	let promises = [];
+	for(let i =0; i<players.length; i++){
+		rounds.push([]);
+	}
+
+	for(let i = 0; i < players.length; i++) {
+		let temp = [];
+		for(let j = 0; j < players.length; j++) {
+			let value = i + j + 1;
+			if(value > players.length) value -= players.length;
+			temp.push(value);
+		}	
+		arr.push(temp);
+	}
+	for(let i = 0; i < players.length; i++) {
+		for(let j=0; j < players.length; j++) {
+			console.log(arr[i][j]);
+		}
+		console.log("-------------")
+	}
+	for(let i = 0; i < players.length; i++) {
+		for(let j=i; j < players.length; j++) {
+			if (i !== j) {
+				console.log("--",arr[i][j]);
+				rounds[arr[i][j]-1].push({a: players[i], b:players[j]})					
+			}
+		}
+	}
+	return new Promise((resolve, reject) => {
+		rounds.forEach((item, index) => {
+			promises.push(
+
+				Rounds.createRound(index+1, tournament.id)
+				.then(result => {
+					let matches = [];
+					item.forEach((item1) => {
+						matches.push(
+							Rounds.createMatch(item1.a, item1.b, result[0].id)
+						)
+					})
+					return Promise.all(matches)
+				})
+
+			)
+
+			Promise.all(promises)
+			.then((result) => {
+				resolve(rounds)
+			})
+			.catch(error => {
+				reject(error);
+			})
+		})		
+	})
+}
+
+const pavuk = (tournament) => {
+	console.log('Tu som sa dostal-- ', tournament)
+	// return new Promise((resolve, reject) => {
+
+	// })
+}
+
+const roundRobin = (tournament) => {
+	let players = [];
+	return new Promise((resolve, reject) => {
+		Player.getAssingments()
+		.then(result => {
+			if(result[0].zoznamhracovs) {
+				result[0].zoznamhracovs.zoznamhracov.forEach((item) => {
+					if (item.tournamentId === tournament.id && item.confirmed) {
+						players.push(item.playerId)
+					}
+				})
+			}
+			createTable(players);
+			return generateMatches(tournament, players);
+		})
+		.then((result) => {
+			console.log(result);
+			resolve(result)
+		})
+		.catch(error => reject(error));
+	})
+}
+
+const doSomething = (tournament) => {
+	console.log('Tu som sa dostal-- ', tournament)
+	// return new Promise((resolve, reject) => {
+		
+	// })
+}
+
+
+
+let parovanieFunctions = {
+	svajciarsky: doSomething,
+	pavuk: pavuk,
+	roundRobin: roundRobin
+}
+
+
 
 
 

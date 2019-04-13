@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>PIS
+	</title>
+	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700&amp;subset=latin-ext" rel="stylesheet"> 
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.1/css/all.css" integrity="sha384-O8whS3fhG2OnA5Kas0Y9l3cfpmYjapjI0E4theH4iuMD+pLhbf6JI0jIMfYcK3yZ" crossorigin="anonymous">
+	<link rel="stylesheet" href="/css/normalize.css">
+	<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+	<div class="wrapper">
+		<h1>Zapasy {{round}}. kola</h1>
+		<form action="/round/update" method="POST">
+			<h2>Prosim, vyplnte vsetky zapasy</h2>
+			<table >
+				<tr>
+					<th>Názov tímu 1</th>
+					<th>Skore A</th>
+					<th>Skore B</th>
+					<th>Názov tímu 2</th>
+				</tr>
+					{{#each matches}}
+					<tr>
+						<td>{{this.team1}}</td>
+						<td><input type="text" id="{{this.id}}A" name="{{this.id}}A" placeholder="{{this.scoreA}}"></td>
+						<td><input type="text" id="{{this.id}}B" name="{{this.id}}B" placeholder="{{this.scoreB}}"></td>
+						<td>{{this.team2}}</td>
+					</tr>
+					{{/each}}
+			</table> 
+
+			<input type="submit" class="button-ok" value="Potvrdiť" id="search-button"class="button btn-form">
+			
+		</form>
+
+	</div>
+	
+	
+</body>
+</html>
