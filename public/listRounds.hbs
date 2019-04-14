@@ -13,7 +13,11 @@
 <body>
 	<div class="wrapper">
 		<h1>Zapasy {{round}}. kola</h1>
-		<form action="/round/update" method="POST">
+		{{#if pavuk}}
+			<form action="/pavuk/update" method="POST">
+		{{else}}
+			<form action="/roundRobin/update" method="POST">
+		{{/if}}
 			<h2>Prosim, vyplnte vsetky zapasy</h2>
 			<table >
 				<tr>

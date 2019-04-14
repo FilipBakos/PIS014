@@ -9,6 +9,7 @@ const dateFormat = require('dateformat');
 const Player = require('./controllers/playerController.js');
 const Tournament = require('./controllers/tournamentController.js');
 const Rounds = require('./controllers/roundController.js');
+const notify = require('./controllers/notify.js');
 
 
 const publicPath = path.join(__dirname, '../public' );
@@ -409,7 +410,7 @@ app.get('/tournament/start/:id', (req, res) => {
 		return parovanieFunctions[result[0].turnaj.parovanie](result[0].turnaj)
 	})
 	.then(result => {
-		res.redirect('/tournament/round');
+		res.redirect('http://localhost:3000/tournament/round');
 	})
 	.catch(error => {
 		console.log(error)
@@ -424,51 +425,157 @@ app.get('/tournament/round', (req, res) => {
 	let players = [];
 	let obj = {};
 	console.log("LastRound: ", lastRound)
+	// if(type === 'roundRobin') {
+		Rounds.getAllRounds()
+		.then(result => {
+			console.log(result)
+			if(result[0].zoznamkols){
+				result[0].zoznamkols.zoznamkol.forEach((item) => {
+					console.log(item.tournamentId , ' --- ', tournamentId , ' --- ',item.name,' --- ', lastRound.toString())
+					if(item.tournamentId.toString() === tournamentId.toString() && item.name === lastRound.toString()) roundId = item.id
+				})
+			}
+
+			if (roundId === 0) {
+				res.redirect('http://localhost:3000/');
+			}
+			return Rounds.getAllMatches()
+		})
+		.then(result => {
+					console.log(result)
+
+			if(result[0].zapass){
+				result[0].zapass.zapa.forEach((item) => {
+					if (item.roundId === roundId) {
+						matches.push(item);
+					}
+				})
+			}
+			console.log("Round ID> ", roundId)
+			console.log("Matches> ", matches);
+			return Player.getAll()
+		})
+		.then(result => {
+			if(result[0].players){
+				result[0].players.player.forEach((player) => {
+					matches.forEach((match) => {
+						if (player.id === match.team1Id) match.team1 = player.nickName;
+						if (player.id === match.team2Id) match.team2 = player.nickName;
+					})
+				})
+			}
+			// matches1 = matches;
+			// console.log(matches1 , ' -- ', matches)
+			if( type === 'roundRobin')
+				res.render('listRounds', {round:lastRound,matches: matches});
+			else 
+				res.render('listRounds', {pavuk:true,round:lastRound,matches: matches});
+		})
+	// }
+	
+});
+
+app.post('/pavuk/update', (req, res) => {
+	let roundId = 0;
+	console.log('Tu som v update');
+	let promises = [];
+	let promises2 = [];
+	let matches1 = [];
+	let matches2 = [];
+	let winners = [];
+	let numberOfMatches = 0;
 
 	Rounds.getAllRounds()
 	.then(result => {
 		console.log(result)
-		if(result[0].zoznamkols && type === 'roundRobin'){
+		console.log("Round ID: ", roundId, " lastRound>",lastRound);
+		if(result[0].zoznamkols){
 			result[0].zoznamkols.zoznamkol.forEach((item) => {
 				console.log(item.tournamentId , ' --- ', tournamentId , ' --- ',item.name,' --- ', lastRound.toString())
 				if(item.tournamentId.toString() === tournamentId.toString() && item.name === lastRound.toString()) roundId = item.id
 			})
 		}
+		console.log("Round ID: ", roundId)
+
 		if (roundId === 0) {
+			notifyPlayers(tournamentId);
 			res.redirect('http://localhost:3000/');
 		}
 		return Rounds.getAllMatches()
 	})
 	.then(result => {
-				console.log(result)
-
 		if(result[0].zapass){
 			result[0].zapass.zapa.forEach((item) => {
 				if (item.roundId === roundId) {
-					matches.push(item);
+					if(req.body[item.id + 'A']) {
+						scoreA = req.body[item.id + 'A'] 
+					} else {
+						scoreA = 0;
+					}
+					if(req.body[item.id + 'B']) {
+						scoreB = req.body[item.id + 'B']
+					} else {
+						scoreB = 0;
+					}
+					numberOfMatches++;
+					console.log(item.scoreA, " : ",item.scoreA)
+					if(scoreA > scoreB) {
+						winners.push(item.team1Id)
+					} else {
+						winners.push(item.team2Id)
+					}
+					promises2.push(
+						Rounds.updateMatch(item.id, scoreA, scoreB)
+						.then(result => {
+							console.log("Updatovany match.")
+						})
+						.catch(error => console.log("errorroorororo"))
+					)
 				}
 			})
 		}
-		console.log("Round ID> ", roundId)
-		console.log("Matches> ", matches);
-		return Player.getAll()
+		return Promise.all(promises2)	
 	})
 	.then(result => {
-		if(result[0].players){
-			result[0].players.player.forEach((player) => {
-				matches.forEach((match) => {
-					if (player.id === match.team1Id) match.team1 = player.nickName;
-					if (player.id === match.team2Id) match.team2 = player.nickName;
-				})
-			})
+		console.log("Pocet zapasov v predchadzajucom kole -- ",numberOfMatches);
+		if(numberOfMatches === 1) {
+			console.log("Vyhodnotenie turnaja a uprava statistik");
+			notifyPlayers(tournamentId);
+			res.redirect('http://localhost:3000/');
+			// updateStatistics(tournamentID);
+		} else {
+			for (let i=0; i< winners.length/2; i++) {
+				matches1.push({a: winners[i], b:winners[winners.length-i-1]})
+			}
+			console.log("Zapasy: ", matches1);	
+			return Rounds.createRound(lastRound+1, tournamentId)
+			
 		}
-		// matches1 = matches;
-		// console.log(matches1 , ' -- ', matches)
-		res.render('listRounds', {round:lastRound,matches: matches});
 	})
+	.then(result => {
+		console.log("id roundu -- ", result[0].id);
+		matches1.forEach((match) => {
+			promises.push(
+				Rounds.createMatch(match.a,match.b,result[0].id)
+				.then(res => {
+					console.log(res[0].id);
+				})
+				.catch(err => console.log("Error - ", err))
+			)
+		})
+		return Promise.all(promises);
+	})
+	.then(result => {
+		console.log("Tu som sa dostal, malo by presmerovat")
+		res.redirect('http://localhost:3000/tournament/round');
+	})
+	.catch(error => {
+		console.log("Error ",error);
+	})
+
 });
 
-app.post('/round/update', (req, res) => {
+app.post('/roundRobin/update', (req, res) => {
 	console.log('Tu som v update');
 	let roundId = 0;
 	let promises = [];
@@ -500,8 +607,6 @@ app.post('/round/update', (req, res) => {
 			})
 		}
 		else if(scoreA === scoreB) {
-						console.log("A ma rovnake skore")
-
 			table.forEach((row) => {
 				if (row.id === match.team1Id || row.id === match.team2Id) {
 					row.draw++;
@@ -510,8 +615,6 @@ app.post('/round/update', (req, res) => {
 			})
 		} 
 		else {
-						console.log("B ma lepsie skore")
-
 			table.forEach((row) => {
 				if (row.id === match.team2Id) {
 					row.win++;
@@ -620,13 +723,13 @@ const generateMatches = (tournament, players) => {
 
 				Rounds.createRound(index+1, tournament.id)
 				.then(result => {
-					let matches = [];
+					let matches2 = [];
 					item.forEach((item1) => {
-						matches.push(
+						matches2.push(
 							Rounds.createMatch(item1.a, item1.b, result[0].id)
 						)
 					})
-					return Promise.all(matches)
+					return Promise.all(matches2)
 				})
 
 			)
@@ -642,14 +745,66 @@ const generateMatches = (tournament, players) => {
 	})
 }
 
-const pavuk = (tournament) => {
-	console.log('Tu som sa dostal-- ', tournament)
-	// return new Promise((resolve, reject) => {
+const generateRound = (tournamentId, players) => {
+	//tu by mohlo byt vytiahnutie vsetkych ELO, a poparovanie pre hraca a sport,
+	// potom zoradenie hracov v pointer	
+	return new Promise((resolve, reject) => {
+		let matches1 = [];
+		let promises = [];
+		for (let i=0; i< players.length/2; i++) {
+			matches1.push({a: players[i], b:players[players.length-i-1]})
+		}
+		console.log("Zapasy: ", matches1);	
+		Rounds.createRound(lastRound+1, tournamentId)
+		.then(result => {
+			matches1.forEach((match) => {
+				promises.push(
+					Rounds.createMatch(match.a,match.b,result[0].id)
+					.then(res => console.log("Vytvoreny match"))
+					.catch(err => console.log("Error"))
+				)
+			})
+			return Promise.all(promises);
+		})
+		.then(result => {
+			console.log("Nagenerovane prve zapasy");
+			resolve();
+		})
+		.catch(error => {
+			reject();
+		})
+	})
+	
+}
 
-	// })
+const pavuk = (tournament) => {
+	lastRound = 0;
+	let players = [];
+	console.log('Tu som sa dostal-- ', tournament)
+	return new Promise((resolve, reject) => {
+		Player.getAssingments()
+		.then(result => {
+			if(result[0].zoznamhracovs) {
+				result[0].zoznamhracovs.zoznamhracov.forEach((item) => {
+					if (item.tournamentId === tournament.id && item.confirmed) {
+						players.push(item.playerId)
+					}
+				})
+			}
+			return generateRound(tournament.id, players);
+		})
+		.then(result => {
+			console.log("Aj zapasy a aj kolo")
+			resolve(result);
+		})
+		.catch(error => {
+			reject(error);
+		})
+	})
 }
 
 const roundRobin = (tournament) => {
+	lastRound = 0;
 	let players = [];
 	return new Promise((resolve, reject) => {
 		Player.getAssingments()
@@ -673,11 +828,75 @@ const roundRobin = (tournament) => {
 }
 
 const doSomething = (tournament) => {
-	console.log('Tu som sa dostal-- ', tournament)
-	// return new Promise((resolve, reject) => {
-		
-	// })
+	console.log('Prebehol svajciarsky turnaj');
 }
+
+
+const notifyPlayers = (tournamentId) => {
+	let obj = [];
+	let rounds = [];
+	let matchess = [];
+	let emails = [];
+	Tournament.getById(tournamentId)
+	.then(result => {
+		// console.log("Tournament: ",result[0])
+		obj.push({turnaj: result[0].turnaj});
+		return Rounds.getAllRounds()
+	})
+	.then(result => {
+		// console.log()
+		result[0].zoznamkols.zoznamkol.forEach((item) => {
+			if (item.tournamentId === obj[0].turnaj.id){
+				rounds.push(item.id);
+			}
+		})
+		return Rounds.getAllMatches()
+	})
+	.then(result => {
+		result[0].zapass.zapa.forEach((item) => {
+			if(rounds.includes(item.roundId)) {
+				matchess.push(item);
+			}
+		})
+		return Player.getAll()
+	})
+	.then(result => {
+		console.log(result)
+		result[0].players.player.forEach((player) => {
+			matchess.forEach((match) => {
+				if (player.id === match.team1Id) {
+					emails.push(player.email)
+					match.team1 = player.nickName;
+				}
+				if (player.id === match.team2Id) {
+					emails.push(player.email)
+					match.team2 = player.nickName;
+				}
+			})
+			if(table.length > 0) {
+				table.forEach((item) => {
+				  if(item.id === player.id) item.id = player.nickName;
+				})
+			}
+		})
+		let message = '';
+		let subject = "Vyhodnotenie turnaja " + obj[0].turnaj.name;
+		matchess.forEach((item) => {
+		  	message += item.team1 + " " + item.scoreA + " : " + item.scoreB + " " + item.team2 + "\r\n"
+		})
+		if (table.length > 0) {
+			message += "\n\n Tabulka: \n"
+			table.forEach((item) => {
+				message += item + "\n";
+			})
+		}
+		let setOfEmails = new Set(emails)
+		setOfEmails.forEach((item) => {
+			notify.notifyPlayer(item, subject, message);
+		})
+	})
+}
+
 
 
 
