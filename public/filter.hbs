@@ -11,9 +11,12 @@
 	<link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+	<div id="message">
+		<h2>{{message}}</h2>
+	</div>
 	<div class="wrapper">
 		<h1>Vyhľadanie tunaja podľa filtra</h1>
-		<form action="/filter" method="POST">
+		<form action="/filter" method="POST" name="form">
 
 			<div class="part">
 				<label for="name">Názov turnaja</label>
@@ -28,8 +31,9 @@
 			<div class="part">
 				<label for="sportId">Šport</label>
 				<select name="sportId" id="sportId">
+					<option value="0">------</option>
 					{{#each sports}}
-					  <option value={{this.id}}>{{this.nazov}}</option>
+					  <option value={{this.id}}>{{this.name}}</option>
 					{{/each}}
 				</select>
 			</div>
@@ -40,6 +44,11 @@
 
 	</div>
 	
-	
+	<script src="/js/libs/jquery-3.3.1.min.js"></script>
+	<script>
+		setTimeout(() => { 
+			$('#message').hide(); 
+		}, 3000);
+	</script>
 </body>
 </html>

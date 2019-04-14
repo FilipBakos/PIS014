@@ -12,7 +12,9 @@
 </head>
 <body>
 	
-		
+	<div id="message">
+		<h2>{{message}}</h2>
+	</div>
 	
 	{{#if id}}
 	<div class="wrapper">
@@ -51,5 +53,11 @@
 		</div>
 	{{/if}}
 	
+	<script src="/js/libs/jquery-3.3.1.min.js"></script>
+	<script>
+		setTimeout(() => { 
+			$('#message').hide(); 
+		}, 3000);
+	</script>
 </body>
 </html>

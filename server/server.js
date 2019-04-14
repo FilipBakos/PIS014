@@ -4,12 +4,17 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const hbs = require('hbs');
 const dateFormat = require('dateformat');
+const flash = require('connect-flash-plus');
+const session = require('express-session');
 
 // const {Elo, Match, OrganizatorsList,Player,Playerslist,Roundslist,Sport,Tournament} = require('../models/index.js');
 const Player = require('./controllers/playerController.js');
 const Tournament = require('./controllers/tournamentController.js');
 const Rounds = require('./controllers/roundController.js');
 const notify = require('./controllers/notify.js');
+const sport = require('./controllers/sport.js');
+const elo = require('./controllers/elo.js');
+
 
 
 const publicPath = path.join(__dirname, '../public' );
@@ -25,20 +30,35 @@ let tournamentId = '188784';
 let type = 'roundRobin';
 let matches = [];
 
+const compare = (a,b) => {
+  if (a.elo < b.elo)
+    return -1;
+  else 
+    return 1;
+  return 0;
+}
+
 
 
 
 var app = express();
 var server = http.createServer(app);
 
+
 app.set('views',path.join(__dirname,'../public'))
 app.set("view engine", 'hbs');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(publicPath));
+app.use(session({
+  secret: 'keyboard cat',
+  cookie: { maxAge: 60000 }
+}));
+ 
+app.use(flash());
 
 app.get('/', (req, res) => {
-	res.render('index', {id: id});
+	res.render('index', {message: req.flash('info'),id: id});
 });
 
 app.post('/login', (req, res) => {
@@ -54,6 +74,7 @@ app.post('/login', (req, res) => {
 		  	table = [];
 		  }
 		})
+		req.flash('info', 'Boli ste prihlásený')
 		res.redirect('http://localhost:3000/');
 		// if(id !== 0) {
 		// 	res.redirect('http://localhost:3000/');
@@ -68,13 +89,14 @@ app.get('/logout', (req, res) => {
 	// tournamentId = 0;
 	// lastRound = 0;
 	table = [];
+	req.flash('info', 'Boli ste odhlasený')
 	res.redirect('http://localhost:3000/');
 
 });
 
 //BP01
 app.get('/registrate', (req, res) => {
-	res.render('registrate');
+	res.render('registrate',{message: req.flash('info')});
 });
 
 app.post('/registrate', (req, res) => {
@@ -82,6 +104,7 @@ app.post('/registrate', (req, res) => {
 	Player.create(req.body)
 		.then(player => {
 			req.body.id = player[0].id;
+			req.flash('info', 'Boli ste zaregistrovaný')
 			res.redirect('http://localhost:3000/');
 		})
 		.catch(error => {
@@ -92,6 +115,7 @@ app.post('/registrate', (req, res) => {
 //MIDDLEWARE - ci je prihlaseny
 app.use(function(req, res, next) {
   if (id === 0) {
+  	req.flash('info', 'Nemáte oprávnenie')
     return res.redirect('http://localhost:3000/');
   }
   next();
@@ -107,7 +131,7 @@ app.get('/confirmation', (req, res) => {
 		  }
 		})
 		console.log(players);
-		res.render('confirmation', {players: players});
+		res.render('confirmation', {message: req.flash('info'),players: players});
 	})
 })
 
@@ -127,6 +151,7 @@ app.post('/confirmation', (req, res) => {
 
 		Promise.all(promises)
 		.then((result) => {
+			req.flash('info', 'Hráči boli potvrdený')
 			res.redirect('http://localhost:3000/');
 		})
 	} else {
@@ -136,7 +161,11 @@ app.post('/confirmation', (req, res) => {
 
 //BP02
 app.get('/filter', (req, res) => {
-	res.render('filter');
+	sport.getAll()
+	.then(result => {
+		res.render('filter',{message: req.flash('info'),sports: result[0].sports.sport})
+	})
+	.catch(error => console.log(Error));
 });
 
 app.post('/filter', (req, res) => {
@@ -155,26 +184,57 @@ app.post('/filter', (req, res) => {
 		return Tournament.getAll()
 	})
 	.then((result) => {
+		console.log("Turnaje: ",result[0].turnajs.turnaj);
 		result[0].turnajs.turnaj.forEach((item) => {
 			//TOTO PREROBIT NA 3*foreach
-			console.log(item.id)
+			// console.log(item.id)
+			// console.log(req.body)
+			console.log(req.body.date , ' -- ', item.date);
+			console.log(req.body.name , ' -- ', item.name);
+			console.log(req.body.sportId , ' -- ', item.sportId);
+
 			if (tournamentsAlreadyLogged.includes(item.id)){
 				console.log('Uz je regnuty');
-			} else if (req.body.date !== '' && req.body.name !== ''){
-				if (req.body.date === dateFormat(item.date, "yyyy-mm-dd") && req.body.name === item.name){
-					tournaments.push(item)
-				} 
-			} else if(req.body.date !== '' || req.body.name !== '') {
-				if (req.body.date !== '' && req.body.date === dateFormat(item.date, "yyyy-mm-dd")){
-					tournaments.push(item)
-				} else if (req.body.name !== '' && req.body.name === item.name){
+			} else if(req.body.date !== ''){
+				if(req.body.date === dateFormat(item.date, "yyyy-mm-dd")){
+					if(req.body.name !== ''){
+						if (item.name.toLowerCase().indexOf(req.body.name.toLowerCase()) > -1){
+							if(req.body.sportId.toString() !== 0){
+								if (req.body.sportId.toString() === item.sportId.toString()){
+									tournaments.push(item)
+								}
+							} else {
+								tournaments.push(item)
+							}
+						}
+					} else if(req.body.sportId.toString() !== 0){
+						if (req.body.sportId.toString() === item.sportId.toString()){
+							tournaments.push(item)
+						}
+					} else  {
+						tournaments.push(item)
+					}
+				}
+			} else if(req.body.name !== ''){
+				if (item.name.toLowerCase().indexOf(req.body.name.toLowerCase()) > -1){
+					if(req.body.sportId.toString() !== 0){
+						if (req.body.sportId.toString() === item.sportId.toString()){
+							tournaments.push(item)
+						}
+					} else {
+						tournaments.push(item)
+					}
+				}
+			} else if(req.body.sportId.toString() !== '0' && req.body.sportId.toString() !== ''){
+				if (req.body.sportId.toString() === item.sportId.toString()){
 					tournaments.push(item)
 				}
 			} else {
 				tournaments.push(item)
 			}
 		})
-		res.render("listFilteredTournaments",{tournaments: tournaments});
+		console.log("Turnaje1: ",tournaments);
+		res.render("listFilteredTournaments",{message: req.flash('info'),tournaments: tournaments});
 	})
 	.catch(error => {
 		console.log(error)
@@ -186,24 +246,69 @@ app.get('/connect/:id', (req, res) => {
 	// .then(result => {
 	// 	console.log(result);
 	// })
-	Player.createAssingment(id, req.params.id)
+	let sportId;
+	Tournament.getById(req.params.id)
+	.then(result => {
+		if(result[0].turnaj) {
+			sportId = result[0].turnaj.sportId;
+		}
+		return Player.createAssingment(id, req.params.id)
+	})
 	.then(result => {
 		console.log(result);
-		res.redirect('http://localhost:3000/');
+		return elo.getAll()
+	})
+	.then(result => {
+		let value = 0;
+		console.log("Result: ",result)
+		if(result[0].hodnotenies) {
+			result[0].hodnotenies.hodnoteny.forEach((item) => {
+				console.log(item.playerId.toString(), ' -- ',id.toString(),' -- ',item.id.toString(),' -- ', sportId.toString())
+				if(item.playerId.toString() === id.toString() && item.sportId.toString() === sportId.toString()) value += 1;
+			})
+		}
+		console.log("Value: ", value);
+
+		if(value === 0){
+			elo.create(id,1000,sportId)
+			.then(result => {
+				req.flash('info', 'Boli ste prihlásený na turnaj')
+				res.redirect('http://localhost:3000/')
+			})
+			.catch(error => console.log(error))
+		} else {
+			req.flash('info', 'Boli ste prihlásený na turnaj')
+			res.redirect('http://localhost:3000/');
+		}
 	})
 	.catch(error => console.log(error));
+	
 });
 
 //BP03
 app.get('/tournament/create', (req, res) => {
-	res.render('createTournament');
+	sport.getAll()
+	.then(result => {
+		res.render('createTournament',{sports: result[0].sports.sport})
+	})
+	.catch(error => console.log(Error));
 });
 
 app.get('/tournament/create/:id', (req, res) => {
+	let turnaj = [];
 	Tournament.getById(req.params.id)
 	.then(result => {
-		res.render('createTournament',{"tournament": result[0].turnaj});
+		turnaj = result[0].turnaj;
+		return sport.getAll()
 	})
+	.then(result => {
+		if(result[0].sports){
+			res.render('createTournament',{message: req.flash('info'),sports: result[0].sports.sport, tournament:turnaj})
+		} else {
+			res.render('createTournament',{ tournament:turnaj})
+		}
+	})
+
 });
 
 app.post('/tournament/create', (req, res) => {
@@ -213,6 +318,7 @@ app.post('/tournament/create', (req, res) => {
 		return Tournament.createAssingment(id, tournament[0].id)
 	})
 	.then(result => {
+		req.flash('info', 'Turnaj bol vytvorený')
 		res.redirect('http://localhost:3000/')
 	})
 });
@@ -243,7 +349,7 @@ app.get('/tournament/listOld', (req, res) => {
 	})
 	.then((result) => {
 		console.log(tournaments);
-		res.render('listOldTournaments', {tournaments: tournaments});
+		res.render('listOldTournaments', {message: req.flash('info'),tournaments: tournaments});
 	})
 	.catch(error => {
 		console.log(error)
@@ -277,7 +383,7 @@ app.get('/tournament/list', (req, res) => {
 	})
 	.then((result) => {
 		// console.log(tournaments);
-		res.render('listTournaments', {tournaments: tournaments});
+		res.render('listTournaments', {message: req.flash('info'),tournaments: tournaments});
 	})
 	.catch(error => {
 		console.log(error)
@@ -309,7 +415,7 @@ app.get('/tournament/checkIn/:id', (req, res) => {
 		return Promise.all(promises);
 	})
 	.then(result => {
-		res.render('confirmPlayers',{players: players, id: req.params.id})
+		res.render('confirmPlayers',{message: req.flash('info'),players: players, id: req.params.id})
 	})
 	.catch(error => console.log(error));
 
@@ -337,6 +443,7 @@ app.post('/checkIn/:id', (req, res) => {
 
 	})
 	.then((result) => {
+		req.flash('info', 'Hráči boli potvrdený')
 		res.redirect('http://localhost:3000/');
 	})
 	.catch(error => console.log(error))
@@ -394,7 +501,7 @@ app.get('/tournament/start', (req, res) => {
 		
 	})
 	.then((result) => {
-		res.render('listTournamentsStart', {tournaments: tournaments});
+		res.render('listTournamentsStart', {message: req.flash('info'),tournaments: tournaments});
 	})
 	.catch(error => {
 		console.log(error)
@@ -410,6 +517,7 @@ app.get('/tournament/start/:id', (req, res) => {
 		return parovanieFunctions[result[0].turnaj.parovanie](result[0].turnaj)
 	})
 	.then(result => {
+		req.flash('info', 'Turnaj bol odštartovaný')
 		res.redirect('http://localhost:3000/tournament/round');
 	})
 	.catch(error => {
@@ -437,6 +545,8 @@ app.get('/tournament/round', (req, res) => {
 			}
 
 			if (roundId === 0) {
+				notifyPlayers(tournamentId)
+				req.flash('info', 'Turnaj bol vyhodnotený')
 				res.redirect('http://localhost:3000/');
 			}
 			return Rounds.getAllMatches()
@@ -467,9 +577,9 @@ app.get('/tournament/round', (req, res) => {
 			// matches1 = matches;
 			// console.log(matches1 , ' -- ', matches)
 			if( type === 'roundRobin')
-				res.render('listRounds', {round:lastRound,matches: matches});
+				res.render('listRounds', {message: req.flash('info'),round:lastRound,matches: matches});
 			else 
-				res.render('listRounds', {pavuk:true,round:lastRound,matches: matches});
+				res.render('listRounds', {message: req.flash('info'),pavuk:true,round:lastRound,matches: matches});
 		})
 	// }
 	
@@ -499,6 +609,7 @@ app.post('/pavuk/update', (req, res) => {
 
 		if (roundId === 0) {
 			notifyPlayers(tournamentId);
+			// updateStatistics(tournamentID);
 			res.redirect('http://localhost:3000/');
 		}
 		return Rounds.getAllMatches()
@@ -541,6 +652,7 @@ app.post('/pavuk/update', (req, res) => {
 		if(numberOfMatches === 1) {
 			console.log("Vyhodnotenie turnaja a uprava statistik");
 			notifyPlayers(tournamentId);
+			req.flash('info', 'Turnaj bol vyhodnotený')
 			res.redirect('http://localhost:3000/');
 			// updateStatistics(tournamentID);
 		} else {
@@ -567,6 +679,7 @@ app.post('/pavuk/update', (req, res) => {
 	})
 	.then(result => {
 		console.log("Tu som sa dostal, malo by presmerovat")
+		req.flash('info', 'Bolo vygenerované ďalšie kolo')
 		res.redirect('http://localhost:3000/tournament/round');
 	})
 	.catch(error => {
@@ -641,11 +754,13 @@ app.post('/roundRobin/update', (req, res) => {
 	Promise.all(promises)
 	.then(result => {
 		console.log("Vsecko v poradku")
+		req.flash('info', 'Zápasy boli aktualizované')
 		res.redirect('http://localhost:3000/tournament/round');
 
 	})
 	.catch(error => {
 		console.log("Error => ");
+		req.flash('info', 'Nastal error')
 		res.redirect('http://localhost:3000/');
 	})
 });
@@ -748,20 +863,45 @@ const generateMatches = (tournament, players) => {
 const generateRound = (tournamentId, players) => {
 	//tu by mohlo byt vytiahnutie vsetkych ELO, a poparovanie pre hraca a sport,
 	// potom zoradenie hracov v pointer	
+	let sportId = 0;
+	let playersWithElo = [];
+	let matches1 = [];
+	let promises = [];
 	return new Promise((resolve, reject) => {
-		let matches1 = [];
-		let promises = [];
-		for (let i=0; i< players.length/2; i++) {
-			matches1.push({a: players[i], b:players[players.length-i-1]})
-		}
-		console.log("Zapasy: ", matches1);	
-		Rounds.createRound(lastRound+1, tournamentId)
+		Tournament.getById(tournamentId)
 		.then(result => {
+			sportId = result[0].turnaj.sportId;
+			return elo.getAll()
+		})
+		.then(result => {
+			console.log("Players1: ", players);
+			// console.log(result[0].hodnotenies.hodnoteny)
+			result[0].hodnotenies.hodnoteny.forEach((item) => {
+				// console.log(item)
+				// console.log(item.sportId.toString(), ' --- ', sportId.toString());
+				// console.log(players.contains(item.playerId));
+
+				if(item.sportId.toString() === sportId.toString() && players.includes(item.playerId)){
+					playersWithElo.push({id: item.playerId, elo: item.elo});
+				}
+			})
+			playersWithElo.sort(compare);
+			console.log("Players", playersWithElo)
+			for (let i=0; i< playersWithElo.length/2; i++) {
+				matches1.push({a: playersWithElo[i].id, b:playersWithElo[players.length/2+i].id})
+			}
+			console.log("Zapasy: ", matches1);	
+			return Rounds.createRound(lastRound+1, tournamentId)
+		})
+		.then(result => {
+			console.log("Tu som sa dostal")
+			console.log("matches -- ", matches1)
+			console.log("Result: ", result)
 			matches1.forEach((match) => {
-				promises.push(
-					Rounds.createMatch(match.a,match.b,result[0].id)
-					.then(res => console.log("Vytvoreny match"))
-					.catch(err => console.log("Error"))
+				console.log("match:",match)
+				promises.push(Rounds.createMatch(match.a,match.b,result[0].id)
+					.then(result => {console.log(result)})
+					.catch(error => console.log(error))
 				)
 			})
 			return Promise.all(promises);
@@ -839,7 +979,6 @@ const notifyPlayers = (tournamentId) => {
 	let emails = [];
 	Tournament.getById(tournamentId)
 	.then(result => {
-		// console.log("Tournament: ",result[0])
 		obj.push({turnaj: result[0].turnaj});
 		return Rounds.getAllRounds()
 	})
@@ -862,6 +1001,7 @@ const notifyPlayers = (tournamentId) => {
 	})
 	.then(result => {
 		console.log(result)
+		updateStatistics(matchess);
 		result[0].players.player.forEach((player) => {
 			matchess.forEach((match) => {
 				if (player.id === match.team1Id) {
@@ -879,6 +1019,7 @@ const notifyPlayers = (tournamentId) => {
 				})
 			}
 		})
+
 		let message = '';
 		let subject = "Vyhodnotenie turnaja " + obj[0].turnaj.name;
 		matchess.forEach((item) => {
@@ -896,6 +1037,69 @@ const notifyPlayers = (tournamentId) => {
 		})
 	})
 }
+
+
+
+const updateStatistics = (matches1) => {
+	let players = [];
+	console.log("Matches: ", matches1)
+	if(table.length > 0){
+		table.forEach((item) => {
+			let value = item.win*5 - item.lose*2 + item.draw*2;
+		  players.push({id: item.id, elo:value});
+		})
+	} else {
+		matches1.forEach((item) => {
+		  players.push(item.team1Id);
+		  players.push(item.team2Id)
+		})
+		let setOfPlayers = new Set(players);
+		players = [];
+		setOfPlayers.forEach((item) => {
+		  players.push({id:item, elo:0});
+		})
+		matches1.forEach((item) => {
+			console.log(item.scoreA," -- ",item.scoreB)
+			if(item.scoreA > item.scoreB){
+				players.forEach((player) => {
+				  if(player.id === item.team1Id) player.elo+=5;
+				  if(player.id === item.team2Id) player.elo-=2;
+				})
+			} else if(item.scoreA < item.scoreB){
+				players.forEach((player) => {
+				  if(player.id === item.team1Id) player.elo-=2;
+				  if(player.id === item.team2Id) player.elo+=5;
+				})
+			} else {
+				players.forEach((player) => {
+				  if(player.id === item.team1Id) player.elo+=2;
+				  if(player.id === item.team2Id) player.elo+=2;
+				})
+			}
+		})
+
+	}
+	let newElos = [];
+	console.log("PLAYERS:" ,players);
+	elo.getAll()
+	.then(result => {
+		result[0].hodnotenies.hodnoteny.forEach((item) => {
+		  players.forEach((player) => {
+		    if(player.id === item.playerId){
+		    	player.elo += item.elo;
+		    	console.log("ID: ",item.id," elo: ",player.elo)
+		    	newElos.push(elo.update(item.id, player.elo))
+		    }
+		  })
+		})
+		return Promise.all(newElos)
+	})
+	.then(result => {
+		console.log("ELO Je updatovane")
+	})
+	.catch(error => console.log("Error:",error));
+}
+
 
 
 

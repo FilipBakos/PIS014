@@ -11,6 +11,9 @@
 	<link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+	<div id="message">
+		<h2>{{message}}</h2>
+	</div>
 	<div class="wrapper">
 		<h1>Turnaje</h1>
 		<form action="/" method="GET">
@@ -56,12 +59,17 @@
 				<label for="confirmed" id="check">Potvrdenie</label>
 			</div> --}}
 
-			<input type="submit" class="button-ok" value="Domov" id="search-button"class="button btn-form">
+		{{!-- 	<input type="submit" class="button-ok" value="Domov" id="search-button"class="button btn-form"> --}}
 			
 		</form>
 
 	</div>
 	
-	
+	<script src="/js/libs/jquery-3.3.1.min.js"></script>
+	<script>
+		setTimeout(() => { 
+			$('#message').hide(); 
+		}, 3000);
+	</script>
 </body>
 </html>

@@ -11,6 +11,9 @@
 	<link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+	<div id="message">
+		<h2>{{message}}</h2>
+	</div>
 	<div class="wrapper">
 		<h1>Zapasy {{round}}. kola</h1>
 		{{#if pavuk}}
@@ -42,6 +45,11 @@
 
 	</div>
 	
-	
+	<script src="/js/libs/jquery-3.3.1.min.js"></script>
+	<script>
+		setTimeout(() => { 
+			$('#message').hide(); 
+		}, 3000);
+	</script>
 </body>
 </html>

@@ -13,7 +13,7 @@ const createRound = (number, tournamentId) => {
 			tournamentId: tournamentId
 		}	
 	};
-	console.log(args);
+	console.log("toto vypise: ",args);
 	return soap.createClientAsync(url)
 	.then((client) => {
   		return client.insertAsync(args);
@@ -41,6 +41,7 @@ const createMatch = (team1Id, team2Id, roundId) => {
 	};
 	return soap.createClientAsync(urlMatches)
 	.then((client) => {
+		console.log("a potom toto: ",args);
   		return client.insertAsync(args);
 	}) 
 }

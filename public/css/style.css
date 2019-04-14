@@ -199,3 +199,17 @@ td .button {
 	margin-left: 40px;
 }
 
+/* body #message{
+	text-align: center;
+}
+ */
+#message {
+	width: 600px;
+	display: inline-block;
+	position: absolute;
+	left: calc(50% - 300px);
+	text-align: center;
+	background-color: #d2d2d2;
+	border-radius: 5px;
+}
+

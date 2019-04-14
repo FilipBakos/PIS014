@@ -11,43 +11,46 @@
 	<link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+	<div id="message">
+		<h2>{{message}}</h2>
+	</div>
 	<div class="wrapper">
 		<h1>Registrácia</h1>
 		<form action="registrate" method="POST">
 			
 			<div class="part">
 				<label for="name">Meno</label>
-				<input type="text" id="name" name="name" placeholder="Vaše meno">
+				<input type="text" id="name" name="name" placeholder="Vaše meno" required >
 			</div>
 
 			<div class="part">
 				<label for="lastName">Priezvisko</label>
-				<input type="text" id="lastName" name="lastName" placeholder="Vaše priezvisko">
+				<input type="text" id="lastName" name="lastName" placeholder="Vaše priezvisko" required>
 			</div>
 
 			<div class="part">
 				<label for="nickName">Prezývka</label>
-				<input type="text" id="nickName" name="nickName" placeholder="Vaša prezývka">
+				<input type="text" id="nickName" name="nickName" placeholder="Vaša prezývka" required>
 			</div>
 
 			<div class="part">
 				<label for="password">Password</label>
-				<input type="password" id="password" name="password" placeholder="Vaše heslo">
+				<input type="password" id="password" name="password" placeholder="Vaše heslo" required>
 			</div>
 
 			<div class="part">
 				<label for="email">Email</label>
-				<input type="text" id="email" name="email" placeholder="Váš email">
+				<input type="email" id="email" name="email" placeholder="Váš email" required>
 			</div>
 
 			<div class="part">
 				<label for="narodnost">Národnosť</label>
-				<input type="text" id="narodnost" name="narodnost" placeholder="Vaša národnosť">
+				<input type="text" id="narodnost" name="narodnost" placeholder="Vaša národnosť" required>
 			</div>
 
 			<div class="part">
 				<label for="birth" >Dátum<i class="far fa-calendar-alt"></i></label>
-				<input type="date" id="birth" name="birth">
+				<input type="date" id="birth" name="birth" required>
 			</div>
 
 			<div class="part">
@@ -64,6 +67,11 @@
 
 	</div>
 	
-	
+	<script src="/js/libs/jquery-3.3.1.min.js"></script>
+	<script>
+		setTimeout(() => { 
+			$('#message').hide(); 
+		}, 3000);
+	</script>
 </body>
 </html>

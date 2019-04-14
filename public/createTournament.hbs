@@ -11,6 +11,9 @@
 	<link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+	<div id="message">
+		<h2>{{message}}</h2>
+	</div>
 	<div class="wrapper">
 		<h1>Vytvorenie turnaja</h1>
 		<form action="/tournament/create" method="POST">
@@ -19,27 +22,27 @@
 			
 			<div class="part">
 				<label for="name">Názov</label>
-				<input type="text" id="name" name="name" placeholder="Názov" value="{{tournament.name}}">
+				<input type="text" id="name" name="name" placeholder="Názov" value="{{tournament.name}}" required>
 			</div>
 
 			<div class="part">
 				<label for="date" >Dátum<i class="far fa-calendar-alt"></i></label>
-				<input type="date" id="date" name="date">
+				<input type="date" id="date" name="date" required>
 			</div>
 
 			<div class="part">
 				<label for="place">Miesto</label>
-				<input type="text" id="place" name="place" placeholder="Miesto" value="{{tournament.place}}">
+				<input type="text" id="place" name="place" placeholder="Miesto" value="{{tournament.place}}" required>
 			</div>
 
 			<div class="part">
 				<label for="maxC">Maximálna kapacita</label>
-				<input type="text" id="maxC" name="maxC" placeholder="Maximálna kapacita" value="{{tournament.maxC}}">
+				<input type="text" id="maxC" name="maxC" placeholder="Maximálna kapacita" value="{{tournament.maxC}}" required>
 			</div>
 
 			<div class="part">
 				<label for="minC">Minimálna kapacita</label>
-				<input type="text" id="minC" name="minC" placeholder="Minimálna kapacita" value="{{tournament.minC}}">
+				<input type="text" id="minC" name="minC" placeholder="Minimálna kapacita" value="{{tournament.minC}}" required>
 			</div>
 
 			<div class="part">
@@ -51,9 +54,19 @@
 				</select>
 			</div>
 
+			{{#if sports}}
+				<div class="part">
+					<label for="sportId">Šport</label>
+					<select name="sportId" id="sportId">
+							{{#each sports}}
+						  		<option value="{{this.id}}">{{this.name}}</option>
+						  	{{/each}}
+					</select>
+				</div>
+			{{/if}}
 			<div class="part">
 				<label for="date1">Dátum zverejnenia<i class="far fa-calendar-alt"></i></label>
-				<input type="date" id="date1" name="date1">
+				<input type="date" id="date1" name="date1" required>
 			</div>
 
 
@@ -63,6 +76,11 @@
 
 	</div>
 	
-	
+	<script src="/js/libs/jquery-3.3.1.min.js"></script>
+	<script>
+		setTimeout(() => { 
+			$('#message').hide(); 
+		}, 3000);
+	</script>
 </body>
 </html>
