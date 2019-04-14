@@ -199,7 +199,7 @@ app.post('/filter', (req, res) => {
 				if(req.body.date === dateFormat(item.date, "yyyy-mm-dd")){
 					if(req.body.name !== ''){
 						if (item.name.toLowerCase().indexOf(req.body.name.toLowerCase()) > -1){
-							if(req.body.sportId.toString() !== 0){
+							if(req.body.sportId.toString() !== '0'){
 								if (req.body.sportId.toString() === item.sportId.toString()){
 									tournaments.push(item)
 								}
@@ -207,7 +207,7 @@ app.post('/filter', (req, res) => {
 								tournaments.push(item)
 							}
 						}
-					} else if(req.body.sportId.toString() !== 0){
+					} else if(req.body.sportId.toString() !== '0'){
 						if (req.body.sportId.toString() === item.sportId.toString()){
 							tournaments.push(item)
 						}
@@ -216,12 +216,16 @@ app.post('/filter', (req, res) => {
 					}
 				}
 			} else if(req.body.name !== ''){
+				console.log(item.name.toLowerCase(),"--",req.body.name.toLowerCase())
+				console.log("-->",item.name.toLowerCase().indexOf(req.body.name.toLowerCase()))
 				if (item.name.toLowerCase().indexOf(req.body.name.toLowerCase()) > -1){
-					if(req.body.sportId.toString() !== 0){
+					if(req.body.sportId.toString() !== '0'){
 						if (req.body.sportId.toString() === item.sportId.toString()){
 							tournaments.push(item)
 						}
 					} else {
+												console.log("tu som som")
+
 						tournaments.push(item)
 					}
 				}
