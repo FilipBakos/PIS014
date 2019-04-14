@@ -950,6 +950,7 @@ const pavuk = (tournament) => {
 const roundRobin = (tournament) => {
 	lastRound = 0;
 	let players = [];
+	table=[];
 	return new Promise((resolve, reject) => {
 		Player.getAssingments()
 		.then(result => {
@@ -1005,7 +1006,11 @@ const notifyPlayers = (tournamentId) => {
 	})
 	.then(result => {
 		console.log(result)
-		updateStatistics(matchess);
+		console.log('======================================================================================')
+		console.log(matchess,'',obj[0])
+		console.log('======================================================================================')
+		
+		updateStatistics(matchess, obj[0].turnaj.sportId);
 		result[0].players.player.forEach((player) => {
 			matchess.forEach((match) => {
 				if (player.id === match.team1Id) {
@@ -1044,7 +1049,8 @@ const notifyPlayers = (tournamentId) => {
 
 
 
-const updateStatistics = (matches1) => {
+const updateStatistics = (matches1, sportId1) => {
+	console.log(matches1 , ' == ',sportId1)
 	let players = [];
 	console.log("Matches: ", matches1)
 	if(table.length > 0){
@@ -1089,7 +1095,7 @@ const updateStatistics = (matches1) => {
 	.then(result => {
 		result[0].hodnotenies.hodnoteny.forEach((item) => {
 		  players.forEach((player) => {
-		    if(player.id === item.playerId){
+		    if(player.id === item.playerId && item.sportId.toString() === sportId1.toString()){
 		    	player.elo += item.elo;
 		    	console.log("ID: ",item.id," elo: ",player.elo)
 		    	newElos.push(elo.update(item.id, player.elo))
