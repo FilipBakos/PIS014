@@ -12,55 +12,48 @@
 </head>
 <body>
 	
-{{!-- 	<div id="message">
+	<div id="message">
 		<h2>{{message}}</h2>
-	</div> --}}
+	</div>
 	
 	<div class="wrapper">
 		<h2>{{tournament.name}}</h2>
 		<div class="group">
-			<p>Dátum konania: {{tournament.date}}</p>
-			<p>Dátum zverejnenia: {{tournament.date1}}</p>
-			<p>Minimálna kapacita: {{tournament.minC}}</p>
-			<p>Maximálna kapacita: {{tournament.maxC}}</p>
-			<p>Miesto konania: {{tournament.place}}</p>
-			<p>Párovanie: {{tournament.parovanie}}</p>
-			<p>organizator: {{tournament.organizator}}</p>
-			<table >
-				<tr>
-					{{#if tournament.connected}}
-					{{else}}
-						<th>Prihlásenie sa na turnaj</th>
-					{{/if}}
-					{{#if tournament.organizator}}
-						<th>Potvrdenie registrácií na turnaj</th>
-						<th>Spustenie turnaja</th>
-					{{/if}}
-					<th>Zobrazenie výsledkov</th>
-				</tr>
-				
-				<tr>
-					{{#if tournament.connected}}
-						
-					{{else}}
-						<td><a href="/connect/{{tournament.id}}" class="button">Prihlásiť sa</a></td>
-					{{/if}}
-					{{#if tournament.organizator}}
-						<td><a href="/tournament/checkIn/{{tournament.id}}" class="button">Potvrdiť registrácie</a></td>
-						<td><a href="/tournament/start/{{tournament.id}}" class="button">Spustiť turnaj</a></td>
-					{{/if}}
-					<td>-</td>
-				
-				</tr>	
-			</table> 
+			<div class="info">
+				<p class="info"><span>Dátum konania</span>{{tournament.date}}</p>
+				<p class="info"><span>Dátum zverejnenia</span>{{tournament.date1}}</p>
+				<p class="info"><span>Maximálna kapacita</span>{{tournament.maxC}}</p>
+				<p class="info"><span>Minimálna kapacita</span>{{tournament.minC}}</p>
+				<p class="info"><span>Počet nepotvrdených hráčov</span>{{tournament.numberOfConnected}}</p>
+				<p class="info"><span>Počet potvrdených hráčov</span>{{tournament.numberOfConfirmed}}</p>
+				<p class="info"><span>Miesto konania</span>{{tournament.place}}</p>
+				<p class="info"><span>Párovanie</span>{{tournament.parovanie}}</p>
+				<p class="info"><span>Šport</span>{{tournament.sport}}</p>
+			</div>
 		</div>
+			{{#if tournament.connected}}
+			{{else}}
+				<a href="/connect/{{tournament.id}}" class="link">Prihlásiť sa <i class="fas fa-arrow-right"></i></a>
+			{{/if}}
+			{{#if tournament.organizator}}
+			
+				<a href="/tournament/create/{{tournament.id}}" class="link">Vytvoriť nový turnaj podľa tohto<i class="fas fa-arrow-right"></i></a>
+				{{#unless tournament.ended}}
+				<a href="/tournament/checkIn/{{tournament.id}}" class="link">Potvrdenie prihlášok<i class="fas fa-arrow-right"></i></a>
+				<a href="/start/{{tournament.id}}" class="link">Spustenie turnaja <i class="fas fa-arrow-right"></i></a>
+				{{/unless}}
+			{{/if}}
+			{{#if tournament.ended}}
+				<a href="/result/{{tournament.id}}" class="link">Pozrieť si výsledky <i class="fas fa-arrow-right"></i></a>
+			{{/if}}
+		
 	</div>
 	
-	{{!-- <script src="/js/libs/jquery-3.3.1.min.js"></script> 
+	 <script src="/js/libs/jquery-3.3.1.min.js"></script> 
 	<script>
 		setTimeout(() => { 
 			$('#message').hide(); 
-		}, 3000);
-	</script>--}}
+		}, 6000);
+	</script>
 </body>
 </html>

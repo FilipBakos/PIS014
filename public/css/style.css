@@ -213,3 +213,24 @@ td .button {
 	border-radius: 5px;
 }
 
+.info {
+	display: block;
+
+}
+
+
+.link {
+	display: block;
+	width: 400px;
+	text-align: left;
+	font-weight: 600;
+	text-decoration: underline;
+	margin: 16px 0;
+}
+
+span {
+	display: inline-block;
+	width: 200px;
+	font-weight: 600;
+}
+

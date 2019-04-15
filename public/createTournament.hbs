@@ -18,7 +18,7 @@
 		<h1>Vytvorenie turnaja</h1>
 		<form action="/tournament/create" method="POST">
 
-			<a href="/tournament/listOld" class="button" id="button-old">Podla stareho turnaja <i class="fas fa-arrow-right"></i></a>
+			<a href="/tournaments/old" class="button" id="button-old">Podla stareho turnaja <i class="fas fa-arrow-right"></i></a>
 			
 			<div class="part">
 				<label for="name">Názov</label>
@@ -26,8 +26,8 @@
 			</div>
 
 			<div class="part">
-				<label for="date" >Dátum<i class="far fa-calendar-alt"></i></label>
-				<input type="date" id="date" name="date" required>
+				<label for="date" >Dátum konania<i class="far fa-calendar-alt"></i></label>
+				<input type="date" id="date" name="date" onchange="handlerDate(event);" required>
 			</div>
 
 			<div class="part">
@@ -37,12 +37,12 @@
 
 			<div class="part">
 				<label for="maxC">Maximálna kapacita</label>
-				<input type="text" id="maxC" name="maxC" placeholder="Maximálna kapacita" value="{{tournament.maxC}}" required>
+				<input type="number" min="4" id="maxC" name="maxC" placeholder="Maximálna kapacita" onchange="handlerCapacity1(event);" value="{{tournament.maxC}}" required>
 			</div>
 
 			<div class="part">
 				<label for="minC">Minimálna kapacita</label>
-				<input type="text" id="minC" name="minC" placeholder="Minimálna kapacita" value="{{tournament.minC}}" required>
+				<input type="number" min="4" id="minC" name="minC" placeholder="Minimálna kapacita" onchange="handlerCapacity2(event);" value="{{tournament.minC}}" required>
 			</div>
 
 			<div class="part">
@@ -77,7 +77,26 @@
 	</div>
 	
 	<script src="/js/libs/jquery-3.3.1.min.js"></script>
+	<script src="/js/libs/jquery-dateformat.min.js"></script>
 	<script>
+		let date = $('#date');
+		let date1 = $('#date1');
+		let maxC = $('#maxC');
+		let minC = $('#minC');
+		date.attr('min',$.format.date(new Date(), 'yyyy-MM-dd'));
+
+		function handlerDate(e){
+			date1.attr('max',e.target.value);
+		}
+
+		function handlerCapacity1(e){
+			minC.attr('max',e.target.value);
+		}
+
+		function handlerCapacity2(e){
+			maxC.attr('min',e.target.value);
+		}
+
 		setTimeout(() => { 
 			$('#message').hide(); 
 		}, 3000);
