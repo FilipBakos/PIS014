@@ -453,12 +453,12 @@ app.get('/connect/:id', (req, res) => {
 			elo.create(id,1000,sportId)
 			.then(result => {
 				req.flash('info', 'Boli ste prihlásený na turnaj')
-				res.redirect('http://localhost:3000/')
+				res.redirect('http://localhost:3000/tournament/'+req.params.id)
 			})
 			.catch(error => console.log(error))
 		} else {
 			req.flash('info', 'Boli ste prihlásený na turnaj')
-			res.redirect('http://localhost:3000/');
+			res.redirect('http://localhost:3000/tournament/'+req.params.id);
 		}
 	})
 	.catch(error => console.log(error));
@@ -617,7 +617,7 @@ app.post('/checkIn/:id', (req, res) => {
 	})
 	.then((result) => {
 		req.flash('info', 'Hráči boli potvrdený')
-		res.redirect('http://localhost:3000/');
+		res.redirect('http://localhost:3000/tournament/'+req.params.id);
 	})
 	.catch(error => console.log(error))
 });

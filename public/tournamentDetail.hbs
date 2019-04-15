@@ -15,7 +15,7 @@
 	<div id="message">
 		<h2>{{message}}</h2>
 	</div>
-	
+	<a href="/" class="button-back">Domov</a>
 	<div class="wrapper">
 		<h2>{{tournament.name}}</h2>
 		<div class="group">
@@ -33,7 +33,9 @@
 		</div>
 			{{#if tournament.connected}}
 			{{else}}
+				{{#unless tournament.ended}}
 				<a href="/connect/{{tournament.id}}" class="link">Prihlásiť sa <i class="fas fa-arrow-right"></i></a>
+				{{/unless}}
 			{{/if}}
 			{{#if tournament.organizator}}
 			

@@ -234,3 +234,13 @@ span {
 	font-weight: 600;
 }
 
+.button-back {
+	display: block;
+	position: absolute;
+	top: 40px;
+	right: 100px;
+	background-color: #e2e2e2;
+	border-radius: 5px;
+	width: 150px;
+}
+
