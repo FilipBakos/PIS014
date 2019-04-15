@@ -168,7 +168,92 @@ app.get('/filter', (req, res) => {
 	.catch(error => console.log(Error));
 });
 
-app.post('/filter', (req, res) => {
+app.get('/tournaments', (req, res) => {
+	sport.getAll()
+	.then(result => {
+		res.render('filter',{message: req.flash('info'),sports: result[0].sports.sport})
+	})
+	.catch(error => console.log(Error));
+});
+
+// app.post('/filter', (req, res) => {
+// 	let tournaments = [];
+// 	let tournamentsAlreadyLogged = [];
+// 	console.log(req.body);
+// 	Player.getAssingments()
+// 	.then((result) => {
+// 		console.log("RESULT>> ",result)
+// 		if (result[0].zoznamhracovs) {
+// 			result[0].zoznamhracovs.zoznamhracov.forEach((item) => {
+// 				if(item.playerId === id) tournamentsAlreadyLogged.push(item.tournamentId);
+// 			})
+// 		}
+// 		console.log("already logged> ",tournamentsAlreadyLogged)
+// 		return Tournament.getAll()
+// 	})
+// 	.then((result) => {
+// 		console.log("Turnaje: ",result[0].turnajs.turnaj);
+// 		result[0].turnajs.turnaj.forEach((item) => {
+// 			//TOTO PREROBIT NA 3*foreach
+// 			// console.log(item.id)
+// 			// console.log(req.body)
+// 			console.log(req.body.date , ' -- ', item.date);
+// 			console.log(req.body.name , ' -- ', item.name);
+// 			console.log(req.body.sportId , ' -- ', item.sportId);
+
+// 			if (tournamentsAlreadyLogged.includes(item.id)){
+// 				console.log('Uz je regnuty');
+// 			} else if(req.body.date !== ''){
+// 				if(req.body.date === dateFormat(item.date, "yyyy-mm-dd")){
+// 					if(req.body.name !== ''){
+// 						if (item.name.toLowerCase().indexOf(req.body.name.toLowerCase()) > -1){
+// 							if(req.body.sportId.toString() !== '0'){
+// 								if (req.body.sportId.toString() === item.sportId.toString()){
+// 									tournaments.push(item)
+// 								}
+// 							} else {
+// 								tournaments.push(item)
+// 							}
+// 						}
+// 					} else if(req.body.sportId.toString() !== '0'){
+// 						if (req.body.sportId.toString() === item.sportId.toString()){
+// 							tournaments.push(item)
+// 						}
+// 					} else  {
+// 						tournaments.push(item)
+// 					}
+// 				}
+// 			} else if(req.body.name !== ''){
+// 				console.log(item.name.toLowerCase(),"--",req.body.name.toLowerCase())
+// 				console.log("-->",item.name.toLowerCase().indexOf(req.body.name.toLowerCase()))
+// 				if (item.name.toLowerCase().indexOf(req.body.name.toLowerCase()) > -1){
+// 					if(req.body.sportId.toString() !== '0'){
+// 						if (req.body.sportId.toString() === item.sportId.toString()){
+// 							tournaments.push(item)
+// 						}
+// 					} else {
+// 												console.log("tu som som")
+
+// 						tournaments.push(item)
+// 					}
+// 				}
+// 			} else if(req.body.sportId.toString() !== '0' && req.body.sportId.toString() !== ''){
+// 				if (req.body.sportId.toString() === item.sportId.toString()){
+// 					tournaments.push(item)
+// 				}
+// 			} else {
+// 				tournaments.push(item)
+// 			}
+// 		})
+// 		console.log("Turnaje1: ",tournaments);
+// 		res.render("listFilteredTournaments",{message: req.flash('info'),tournaments: tournaments});
+// 	})
+// 	.catch(error => {
+// 		console.log(error)
+// 	})
+// });
+
+app.post('/tournaments', (req, res) => {
 	let tournaments = [];
 	let tournamentsAlreadyLogged = [];
 	console.log(req.body);
@@ -193,9 +278,10 @@ app.post('/filter', (req, res) => {
 			console.log(req.body.name , ' -- ', item.name);
 			console.log(req.body.sportId , ' -- ', item.sportId);
 
-			if (tournamentsAlreadyLogged.includes(item.id)){
-				console.log('Uz je regnuty');
-			} else if(req.body.date !== ''){
+			// if (tournamentsAlreadyLogged.includes(item.id)){
+			// 	console.log('Uz je regnuty');
+			// } else 
+			if(req.body.date !== ''){
 				if(req.body.date === dateFormat(item.date, "yyyy-mm-dd")){
 					if(req.body.name !== ''){
 						if (item.name.toLowerCase().indexOf(req.body.name.toLowerCase()) > -1){
@@ -238,10 +324,56 @@ app.post('/filter', (req, res) => {
 			}
 		})
 		console.log("Turnaje1: ",tournaments);
-		res.render("listFilteredTournaments",{message: req.flash('info'),tournaments: tournaments});
+		return Tournament.getAllByPlayerId()
+	})
+	.then(result => {
+		if(result[0].zoznamorganizators){
+			result[0].zoznamorganizators.zoznamorganizator.forEach((item) => {
+			
+			  tournaments.forEach((turnaj) => {
+			    if (turnaj.id.toString() === item.tournamentId.toString() && id.toString() === item.playerId.toString()){
+			    	turnaj.organizator = true;
+			    }
+			  })
+			})
+			console.log(tournaments)
+		}
+		res.render("listAllTournaments",{message: req.flash('info'),tournaments: tournaments});
 	})
 	.catch(error => {
 		console.log(error)
+	})
+});
+
+app.get('/tournament/:id', (req, res) => {
+	let tournament = {};
+	Tournament.getById(req.params.id)
+	.then(result => {
+		if(result[0]){
+			tournament = result[0].turnaj;
+		}
+		return Tournament.getAllByPlayerId()
+	})
+	.then(result => {
+		if(result[0].zoznamorganizators){
+			result[0].zoznamorganizators.zoznamorganizator.forEach((item) => {
+				if (item.tournamentId.toString() === req.params.id.toString() && item.playerId.toString() === id.toString()){
+					tournament.organizator = true;
+				}
+			})
+		}
+		return Player.getAssingments()
+	})
+	.then(result => {
+		if(result[0].zoznamhracovs){
+			result[0].zoznamhracovs.zoznamhracov.forEach((item) => {
+			  if(tournament.id.toString() === item.tournamentId.toString() && item.playerId.toString() === id.toString()){
+			  	tournament.connected = true;
+			  }
+			})
+		}
+		console.log(tournament)
+		res.render('tournamentDetail',{tournament: tournament})
 	})
 });
 

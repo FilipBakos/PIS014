@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>PIS
+	</title>
+	<link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700&amp;subset=latin-ext" rel="stylesheet"> 
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.1/css/all.css" integrity="sha384-O8whS3fhG2OnA5Kas0Y9l3cfpmYjapjI0E4theH4iuMD+pLhbf6JI0jIMfYcK3yZ" crossorigin="anonymous">
+	<link rel="stylesheet" href="/css/normalize.css">
+	<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+	
+{{!-- 	<div id="message">
+		<h2>{{message}}</h2>
+	</div> --}}
+	
+	<div class="wrapper">
+		<h2>{{tournament.name}}</h2>
+		<div class="group">
+			<p>Dátum konania: {{tournament.date}}</p>
+			<p>Dátum zverejnenia: {{tournament.date1}}</p>
+			<p>Minimálna kapacita: {{tournament.minC}}</p>
+			<p>Maximálna kapacita: {{tournament.maxC}}</p>
+			<p>Miesto konania: {{tournament.place}}</p>
+			<p>Párovanie: {{tournament.parovanie}}</p>
+			<p>organizator: {{tournament.organizator}}</p>
+			<table >
+				<tr>
+					{{#if tournament.connected}}
+					{{else}}
+						<th>Prihlásenie sa na turnaj</th>
+					{{/if}}
+					{{#if tournament.organizator}}
+						<th>Potvrdenie registrácií na turnaj</th>
+						<th>Spustenie turnaja</th>
+					{{/if}}
+					<th>Zobrazenie výsledkov</th>
+				</tr>
+				
+				<tr>
+					{{#if tournament.connected}}
+						
+					{{else}}
+						<td><a href="/connect/{{tournament.id}}" class="button">Prihlásiť sa</a></td>
+					{{/if}}
+					{{#if tournament.organizator}}
+						<td><a href="/tournament/checkIn/{{tournament.id}}" class="button">Potvrdiť registrácie</a></td>
+						<td><a href="/tournament/start/{{tournament.id}}" class="button">Spustiť turnaj</a></td>
+					{{/if}}
+					<td>-</td>
+				
+				</tr>	
+			</table> 
+		</div>
+	</div>
+	
+	{{!-- <script src="/js/libs/jquery-3.3.1.min.js"></script> 
+	<script>
+		setTimeout(() => { 
+			$('#message').hide(); 
+		}, 3000);
+	</script>--}}
+</body>
+</html>
