@@ -82,7 +82,7 @@ app.post('/login', (req, res) => {
 		  	table = [];
 		  }
 		})
-		req.flash('info', 'Boli ste prihlásený')
+		req.flash('info', 'Prihlásenie bolo úspešné')
 		res.redirect('http://localhost:3000/');
 		// if(id !== 0) {
 		// 	res.redirect('http://localhost:3000/');
@@ -97,7 +97,7 @@ app.get('/logout', (req, res) => {
 	// tournamentId = 0;
 	// lastRound = 0;
 	table = [];
-	req.flash('info', 'Boli ste odhlasený')
+	req.flash('info', 'Odhlásenie bolo úspešné')
 	res.redirect('http://localhost:3000/');
 
 });
@@ -112,7 +112,7 @@ app.post('/registrate', (req, res) => {
 	Player.create(req.body)
 		.then(player => {
 			req.body.id = player[0].id;
-			req.flash('info', 'Boli ste zaregistrovaný')
+			req.flash('info', 'Registrácia bola úspešná')
 			res.redirect('http://localhost:3000/');
 		})
 		.catch(error => {
@@ -123,7 +123,7 @@ app.post('/registrate', (req, res) => {
 //MIDDLEWARE - ci je prihlaseny
 app.use(function(req, res, next) {
   if (id === 0) {
-  	req.flash('info', 'Boli ste odhlásený')
+  	req.flash('info', 'Odhlásenie prebehlo úspešne')
     return res.redirect('http://localhost:3000/');
   }
   next();
@@ -159,7 +159,7 @@ app.post('/confirmation', (req, res) => {
 
 		Promise.all(promises)
 		.then((result) => {
-			req.flash('info', 'Hráči boli potvrdený')
+			req.flash('info', 'Hráči boli potvrdení')
 			res.redirect('http://localhost:3000/');
 		})
 	} else {
@@ -452,12 +452,12 @@ app.get('/connect/:id', (req, res) => {
 		if(value === 0){
 			elo.create(id,1000,sportId)
 			.then(result => {
-				req.flash('info', 'Boli ste prihlásený na turnaj')
+				req.flash('info', 'Prihlásenie na turnaj bolo úspešné')
 				res.redirect('http://localhost:3000/tournament/'+req.params.id)
 			})
 			.catch(error => console.log(error))
 		} else {
-			req.flash('info', 'Boli ste prihlásený na turnaj')
+			req.flash('info', 'Prihlásenie na turnaj bolo úspešné')
 			res.redirect('http://localhost:3000/tournament/'+req.params.id);
 		}
 	})
@@ -492,7 +492,7 @@ app.post('/tournament/create', (req, res) => {
 		return Tournament.createAssingment(id, tournament[0].id)
 	})
 	.then(result => {
-		req.flash('info', 'Turnaj bol vytvorený')
+		req.flash('info', 'Turnaj bol úspešne vytvorený')
 		res.redirect('http://localhost:3000/')
 	})
 });
@@ -616,7 +616,7 @@ app.post('/checkIn/:id', (req, res) => {
 
 	})
 	.then((result) => {
-		req.flash('info', 'Hráči boli potvrdený')
+		req.flash('info', 'Hráči boli potvrdení')
 		res.redirect('http://localhost:3000/tournament/'+req.params.id);
 	})
 	.catch(error => console.log(error))
